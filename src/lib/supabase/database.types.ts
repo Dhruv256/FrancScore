@@ -1,0 +1,674 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export interface Database {
+  public: {
+    Tables: {
+      ai_usage_logs: {
+        Row: {
+          cost_estimate: number | null;
+          created_at: string;
+          error_message: string | null;
+          feature: string;
+          id: string;
+          metadata: Json | null;
+          model: string | null;
+          provider: string;
+          success: boolean;
+          tokens_input: number | null;
+          tokens_output: number | null;
+          user_id: string | null;
+        };
+        Insert: {
+          cost_estimate?: number | null;
+          created_at?: string;
+          error_message?: string | null;
+          feature: string;
+          id?: string;
+          metadata?: Json | null;
+          model?: string | null;
+          provider?: string;
+          success?: boolean;
+          tokens_input?: number | null;
+          tokens_output?: number | null;
+          user_id?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["ai_usage_logs"]["Insert"]>;
+        Relationships: [];
+      };
+      attempts: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_correct: boolean | null;
+          metadata: Json | null;
+          question_id: string;
+          response_time_ms: number | null;
+          selected_answer_index: number | null;
+          submitted_at: string;
+          time_taken_seconds: number | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_correct?: boolean | null;
+          metadata?: Json | null;
+          question_id: string;
+          response_time_ms?: number | null;
+          selected_answer_index?: number | null;
+          submitted_at?: string;
+          time_taken_seconds?: number | null;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["attempts"]["Insert"]>;
+        Relationships: [];
+      };
+      badges: {
+        Row: {
+          category: string;
+          created_at: string;
+          created_by: string | null;
+          description: string;
+          icon: string | null;
+          id: string;
+          is_published: boolean;
+          name: string;
+          requirement: string | null;
+          updated_at: string;
+          xp_reward: number;
+        };
+        Insert: {
+          category: string;
+          created_at?: string;
+          created_by?: string | null;
+          description: string;
+          icon?: string | null;
+          id?: string;
+          is_published?: boolean;
+          name: string;
+          requirement?: string | null;
+          updated_at?: string;
+          xp_reward?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["badges"]["Insert"]>;
+        Relationships: [];
+      };
+      daily_tasks: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          description: string;
+          estimated_minutes: number;
+          icon: string | null;
+          id: string;
+          is_published: boolean;
+          skill_type: string;
+          title: string;
+          updated_at: string;
+          xp_reward: number;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          description: string;
+          estimated_minutes?: number;
+          icon?: string | null;
+          id?: string;
+          is_published?: boolean;
+          skill_type: string;
+          title: string;
+          updated_at?: string;
+          xp_reward?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["daily_tasks"]["Insert"]>;
+        Relationships: [];
+      };
+      flashcard_reviews: {
+        Row: {
+          id: string;
+          new_status: string | null;
+          previous_status: string | null;
+          rating: string;
+          reviewed_at: string;
+          session_id: string | null;
+          user_id: string;
+          vocabulary_id: string;
+          xp_earned: number;
+        };
+        Insert: {
+          id?: string;
+          new_status?: string | null;
+          previous_status?: string | null;
+          rating: string;
+          reviewed_at?: string;
+          session_id?: string | null;
+          user_id: string;
+          vocabulary_id: string;
+          xp_earned?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["flashcard_reviews"]["Insert"]>;
+        Relationships: [];
+      };
+      flashcard_sessions: {
+        Row: {
+          cards_reviewed: number;
+          completed_at: string | null;
+          deck_type: string;
+          id: string;
+          mastered_count: number;
+          started_at: string;
+          user_id: string;
+          weak_count: number;
+          xp_earned: number;
+        };
+        Insert: {
+          cards_reviewed?: number;
+          completed_at?: string | null;
+          deck_type: string;
+          id?: string;
+          mastered_count?: number;
+          started_at?: string;
+          user_id: string;
+          weak_count?: number;
+          xp_earned?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["flashcard_sessions"]["Insert"]>;
+        Relationships: [];
+      };
+      mock_test_results: {
+        Row: {
+          cefr_estimate: string | null;
+          completed_at: string;
+          created_at: string;
+          id: string;
+          mock_test_id: string;
+          overall_score: number | null;
+          repair_plan: Json | null;
+          skill_breakdown: Json | null;
+          user_id: string;
+        };
+        Insert: {
+          cefr_estimate?: string | null;
+          completed_at?: string;
+          created_at?: string;
+          id?: string;
+          mock_test_id: string;
+          overall_score?: number | null;
+          repair_plan?: Json | null;
+          skill_breakdown?: Json | null;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["mock_test_results"]["Insert"]>;
+        Relationships: [];
+      };
+      mock_test_sections: {
+        Row: {
+          created_at: string;
+          duration_minutes: number;
+          id: string;
+          metadata: Json | null;
+          mock_test_id: string;
+          question_count: number;
+          skill_type: string;
+          sort_order: number;
+        };
+        Insert: {
+          created_at?: string;
+          duration_minutes: number;
+          id?: string;
+          metadata?: Json | null;
+          mock_test_id: string;
+          question_count: number;
+          skill_type: string;
+          sort_order?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["mock_test_sections"]["Insert"]>;
+        Relationships: [];
+      };
+      mock_tests: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          description: string | null;
+          exam_type: string;
+          id: string;
+          is_published: boolean;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          exam_type: string;
+          id?: string;
+          is_published?: boolean;
+          title: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["mock_tests"]["Insert"]>;
+        Relationships: [];
+      };
+      passages: {
+        Row: {
+          content: string;
+          created_at: string;
+          created_by: string | null;
+          cefr_level: string;
+          estimated_minutes: number | null;
+          exam_type: string;
+          highlighted_vocabulary: string[] | null;
+          id: string;
+          is_published: boolean;
+          title: string;
+          topic: string | null;
+          updated_at: string;
+          word_count: number | null;
+        };
+        Insert: {
+          content: string;
+          created_at?: string;
+          created_by?: string | null;
+          cefr_level: string;
+          estimated_minutes?: number | null;
+          exam_type?: string;
+          highlighted_vocabulary?: string[] | null;
+          id?: string;
+          is_published?: boolean;
+          title: string;
+          topic?: string | null;
+          updated_at?: string;
+          word_count?: number | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["passages"]["Insert"]>;
+        Relationships: [];
+      };
+      profiles: {
+        Row: {
+          avatar_url: string | null;
+          created_at: string;
+          current_level_self_assessment: string | null;
+          current_streak: number;
+          email: string | null;
+          exam_date: string | null;
+          full_name: string | null;
+          id: string;
+          longest_streak: number;
+          onboarding_completed: boolean;
+          role: string;
+          target_exam: string | null;
+          target_level: string | null;
+          total_xp: number;
+          updated_at: string;
+          weakest_skill: string | null;
+          daily_time_minutes: number | null;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          created_at?: string;
+          current_level_self_assessment?: string | null;
+          current_streak?: number;
+          email?: string | null;
+          exam_date?: string | null;
+          full_name?: string | null;
+          id: string;
+          longest_streak?: number;
+          onboarding_completed?: boolean;
+          role?: string;
+          target_exam?: string | null;
+          target_level?: string | null;
+          total_xp?: number;
+          updated_at?: string;
+          weakest_skill?: string | null;
+          daily_time_minutes?: number | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
+      };
+      questions: {
+        Row: {
+          audio_url: string | null;
+          correct_answer_index: number;
+          created_at: string;
+          created_by: string | null;
+          cefr_level: string;
+          difficulty: string;
+          exam_type: string;
+          explanation: string | null;
+          id: string;
+          is_published: boolean;
+          metadata: Json | null;
+          options: Json;
+          passage_id: string | null;
+          question_text: string;
+          skill_type: string;
+          tags: string[] | null;
+          topic: string | null;
+          transcript: string | null;
+          trap_type: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          audio_url?: string | null;
+          correct_answer_index: number;
+          created_at?: string;
+          created_by?: string | null;
+          cefr_level: string;
+          difficulty?: string;
+          exam_type?: string;
+          explanation?: string | null;
+          id?: string;
+          is_published?: boolean;
+          metadata?: Json | null;
+          options?: Json;
+          passage_id?: string | null;
+          question_text: string;
+          skill_type: string;
+          tags?: string[] | null;
+          topic?: string | null;
+          transcript?: string | null;
+          trap_type?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["questions"]["Insert"]>;
+        Relationships: [];
+      };
+      speaking_prompts: {
+        Row: {
+          cefr_level: string;
+          created_at: string;
+          created_by: string | null;
+          criteria: Json | null;
+          duration_seconds: number | null;
+          exam_type: string;
+          id: string;
+          is_published: boolean;
+          preparation_seconds: number | null;
+          prompt: string;
+          title: string;
+          topic: string | null;
+          type: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          cefr_level: string;
+          created_at?: string;
+          created_by?: string | null;
+          criteria?: Json | null;
+          duration_seconds?: number | null;
+          exam_type?: string;
+          id?: string;
+          is_published?: boolean;
+          preparation_seconds?: number | null;
+          prompt: string;
+          title: string;
+          topic?: string | null;
+          type?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["speaking_prompts"]["Insert"]>;
+        Relationships: [];
+      };
+      speaking_submissions: {
+        Row: {
+          audio_path: string;
+          created_at: string;
+          estimated_cefr: string | null;
+          id: string;
+          prompt_id: string;
+          review_result: Json | null;
+          score_20: number | null;
+          status: string;
+          transcript: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          audio_path: string;
+          created_at?: string;
+          estimated_cefr?: string | null;
+          id?: string;
+          prompt_id: string;
+          review_result?: Json | null;
+          score_20?: number | null;
+          status?: string;
+          transcript?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["speaking_submissions"]["Insert"]>;
+        Relationships: [];
+      };
+      user_badges: {
+        Row: {
+          badge_id: string;
+          created_at: string;
+          earned_at: string | null;
+          id: string;
+          progress: number;
+          user_id: string;
+        };
+        Insert: {
+          badge_id: string;
+          created_at?: string;
+          earned_at?: string | null;
+          id?: string;
+          progress?: number;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_badges"]["Insert"]>;
+        Relationships: [];
+      };
+      user_progress_snapshots: {
+        Row: {
+          cefr_estimate: string | null;
+          created_at: string;
+          id: string;
+          listening_score: number | null;
+          overall_readiness: number | null;
+          reading_score: number | null;
+          snapshot_date: string;
+          speaking_score: number | null;
+          user_id: string;
+          vocabulary_score: number | null;
+          writing_score: number | null;
+        };
+        Insert: {
+          cefr_estimate?: string | null;
+          created_at?: string;
+          id?: string;
+          listening_score?: number | null;
+          overall_readiness?: number | null;
+          reading_score?: number | null;
+          snapshot_date?: string;
+          speaking_score?: number | null;
+          user_id: string;
+          vocabulary_score?: number | null;
+          writing_score?: number | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_progress_snapshots"]["Insert"]>;
+        Relationships: [];
+      };
+      user_word_bank: {
+        Row: {
+          correct_count: number;
+          created_at: string;
+          ease_score: number;
+          id: string;
+          last_reviewed_at: string | null;
+          mistake_count: number;
+          next_review_at: string | null;
+          review_count: number;
+          status: string;
+          updated_at: string;
+          user_id: string;
+          vocabulary_id: string;
+        };
+        Insert: {
+          correct_count?: number;
+          created_at?: string;
+          ease_score?: number;
+          id?: string;
+          last_reviewed_at?: string | null;
+          mistake_count?: number;
+          next_review_at?: string | null;
+          review_count?: number;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+          vocabulary_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_word_bank"]["Insert"]>;
+        Relationships: [];
+      };
+      vocabulary: {
+        Row: {
+          cefr_level: string;
+          created_at: string;
+          created_by: string | null;
+          english_example_translation: string | null;
+          english_meaning: string;
+          exam_type: string;
+          french_example: string | null;
+          french_word: string;
+          frequency_score: number;
+          id: string;
+          is_published: boolean;
+          tags: string[] | null;
+          topic: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          cefr_level: string;
+          created_at?: string;
+          created_by?: string | null;
+          english_example_translation?: string | null;
+          english_meaning: string;
+          exam_type?: string;
+          french_example?: string | null;
+          french_word: string;
+          frequency_score?: number;
+          id?: string;
+          is_published?: boolean;
+          tags?: string[] | null;
+          topic?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["vocabulary"]["Insert"]>;
+        Relationships: [];
+      };
+      weakness_quests: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          description: string;
+          difficulty: string;
+          id: string;
+          is_published: boolean;
+          questions_count: number;
+          skill_type: string;
+          title: string;
+          trap_type: string | null;
+          updated_at: string;
+          xp_reward: number;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          description: string;
+          difficulty?: string;
+          id?: string;
+          is_published?: boolean;
+          questions_count?: number;
+          skill_type: string;
+          title: string;
+          trap_type?: string | null;
+          updated_at?: string;
+          xp_reward?: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["weakness_quests"]["Insert"]>;
+        Relationships: [];
+      };
+      writing_prompts: {
+        Row: {
+          cefr_level: string;
+          created_at: string;
+          created_by: string | null;
+          criteria: Json | null;
+          exam_type: string;
+          id: string;
+          is_published: boolean;
+          prompt: string;
+          sample_response: string | null;
+          title: string;
+          topic: string | null;
+          type: string | null;
+          updated_at: string;
+          word_limit_max: number | null;
+          word_limit_min: number | null;
+        };
+        Insert: {
+          cefr_level: string;
+          created_at?: string;
+          created_by?: string | null;
+          criteria?: Json | null;
+          exam_type?: string;
+          id?: string;
+          is_published?: boolean;
+          prompt: string;
+          sample_response?: string | null;
+          title: string;
+          topic?: string | null;
+          type?: string | null;
+          updated_at?: string;
+          word_limit_max?: number | null;
+          word_limit_min?: number | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["writing_prompts"]["Insert"]>;
+        Relationships: [];
+      };
+      writing_submissions: {
+        Row: {
+          created_at: string;
+          estimated_cefr: string | null;
+          id: string;
+          prompt_id: string;
+          review_result: Json | null;
+          score_20: number | null;
+          status: string;
+          submitted_text: string;
+          updated_at: string;
+          user_id: string;
+          word_count: number | null;
+        };
+        Insert: {
+          created_at?: string;
+          estimated_cefr?: string | null;
+          id?: string;
+          prompt_id: string;
+          review_result?: Json | null;
+          score_20?: number | null;
+          status?: string;
+          submitted_text: string;
+          updated_at?: string;
+          user_id: string;
+          word_count?: number | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["writing_submissions"]["Insert"]>;
+        Relationships: [];
+      };
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
+  };
+}
+
+

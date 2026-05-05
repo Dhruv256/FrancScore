@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /onboarding
+Allow: /
+
+Sitemap: https://francscore.app/sitemap.xml
