@@ -43,6 +43,7 @@ const navItems = [
   { label: "War Mode", href: "/dashboard/war-mode", icon: "Swords" },
   { label: "Listening Lab", href: "/practice/listening", icon: "Headphones" },
   { label: "Reading Lab", href: "/practice/reading", icon: "BookOpen" },
+  { label: "French All-in-One Book", href: "/book", icon: "Library" },
   { label: "Writing Coach", href: "/practice/writing", icon: "PenTool" },
   { label: "Speaking Coach", href: "/practice/speaking", icon: "Mic" },
   { label: "Vocabulary", href: "/vocabulary", icon: "Library" },

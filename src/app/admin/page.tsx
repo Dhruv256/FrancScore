@@ -16,6 +16,7 @@ const adminStats = [
   { label: "Questions", table: "questions", href: "/admin/questions", icon: HelpCircle },
   { label: "Vocabulary", table: "vocabulary", href: "/admin/vocabulary", icon: Library },
   { label: "Passages", table: "passages", href: "/admin/passages", icon: BookOpen },
+  { label: "French Book", table: "book_chapters", href: "/admin/book", icon: BookOpen },
   { label: "Writing", table: "writing_prompts", href: "/admin/writing", icon: PenTool },
   { label: "Speaking", table: "speaking_prompts", href: "/admin/speaking", icon: Mic },
   { label: "Listening", table: "questions", href: "/admin/listening", icon: Headphones, skill: "LISTENING" },
@@ -64,6 +65,12 @@ export default async function AdminOverviewPage() {
             <div className="font-black text-text-primary">Vocabulary import</div>
             <p className="mt-1">
               Run <code>npm run import:vocab -- --file=../French_schedule.xlsx</code> from the project root.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border-default bg-bg-input p-4">
+            <div className="font-black text-text-primary">French All-in-One Book</div>
+            <p className="mt-1">
+              Run <code>npm run import:book</code>, then <code>npm run generate:book-material -- --chapter 1</code>.
             </p>
           </div>
           <div className="rounded-2xl border border-border-default bg-bg-input p-4">

@@ -16,6 +16,9 @@
     "db:types": "echo Supabase CLI is not configured locally; regenerate src/lib/supabase/database.types.ts from a linked environment.",
     "import:vocabulary:csv": "tsx scripts/import-vocabulary-csv.ts",
     "import:vocab": "tsx scripts/import-french-vocabulary.ts",
+    "import:book": "tsx scripts/import-french-all-in-one-pdf.ts",
+    "generate:book-material": "tsx scripts/generate-book-learning-material.ts",
+    "generate:book-audio": "tsx scripts/generate-book-audio.ts",
     "generate:audio": "tsx scripts/generate-listening-audio.ts",
     "report:learning": "tsx scripts/report-learning-counts.ts"
   },
@@ -27,6 +30,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",
     "next": "^16.2.4",
+    "pdf-parse": "^2.4.5",
     "postgres": "^3.4.9",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
