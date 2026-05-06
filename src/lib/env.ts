@@ -260,5 +260,3 @@ export function isE2ETestModeEnabled(): boolean {
   const parsed = optionalBooleanFlagSchema.safeParse(process.env.FRANCSCORE_E2E_TEST_MODE);
   return parsed.success ? parsed.data ?? false : false;
 }
-
-export const env = getPublicEnv();

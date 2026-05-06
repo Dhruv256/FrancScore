@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
-import { getPublicEnv } from "@/lib/env";
 
-const { NEXT_PUBLIC_APP_URL: BASE_URL } = getPublicEnv();
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://francscore.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { getPublicEnv } from "@/lib/env";
 import "./globals.css";
 
-const { NEXT_PUBLIC_APP_URL: APP_URL } = getPublicEnv();
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://francscore.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
