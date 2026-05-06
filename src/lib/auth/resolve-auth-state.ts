@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
-import { isE2ETestModeEnabled } from "@/lib/env";
+import { isE2ETestModeEnabled } from "@/lib/env/server";
 import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";

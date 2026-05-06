@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getServerEnv } from "@/lib/env";
+import { getServerEnv } from "@/lib/env/server";
 import type { Json } from "@/lib/supabase/database.types";
 
 export type AiFeature =

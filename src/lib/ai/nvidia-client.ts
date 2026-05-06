@@ -1,7 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
-import { getServerEnv } from "@/lib/env";
+import { getServerEnv } from "@/lib/env/server";
 import type { NvidiaModelId, NvidiaModelPurpose } from "@/lib/ai/models";
 import { getAIModelCatalog } from "@/lib/constants/ai-models";
 
@@ -299,26 +299,26 @@ function getApiKeyForPurpose(
 ) {
   switch (purpose) {
     case "MAIN":
-      return env.NVIDIA_MAIN_API_KEY;
+      return env.NVIDIA_MAIN_API_KEY ?? env.NVIDIA_API_KEY;
     case "RERANKER":
-      return env.NVIDIA_RERANK_API_KEY;
+      return env.NVIDIA_RERANK_API_KEY ?? env.NVIDIA_API_KEY;
     case "SAFETY":
-      return env.NVIDIA_SAFETY_API_KEY;
+      return env.NVIDIA_SAFETY_API_KEY ?? env.NVIDIA_API_KEY;
     case "SPEECH_TO_TEXT":
-      return env.NVIDIA_STT_API_KEY;
+      return env.NVIDIA_STT_API_KEY ?? env.NVIDIA_API_KEY;
   }
 }
 
 function getMissingKeyMessage(purpose: NvidiaModelPurpose) {
   switch (purpose) {
     case "MAIN":
-      return "NVIDIA main-model requests require NVIDIA_MAIN_API_KEY on the server.";
+      return "NVIDIA main-model requests require NVIDIA_MAIN_API_KEY or NVIDIA_API_KEY on the server.";
     case "RERANKER":
-      return "NVIDIA rerank requests require NVIDIA_RERANK_API_KEY on the server.";
+      return "NVIDIA rerank requests require NVIDIA_RERANK_API_KEY or NVIDIA_API_KEY on the server.";
     case "SAFETY":
-      return "NVIDIA safety checks require NVIDIA_SAFETY_API_KEY on the server.";
+      return "NVIDIA safety checks require NVIDIA_SAFETY_API_KEY or NVIDIA_API_KEY on the server.";
     case "SPEECH_TO_TEXT":
-      return "NVIDIA speech-to-text requests require NVIDIA_STT_API_KEY on the server.";
+      return "NVIDIA speech-to-text requests require NVIDIA_STT_API_KEY or NVIDIA_API_KEY on the server.";
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getPublicEnv } from "@/lib/env";
+import { getPublicEnv } from "@/lib/env/client";
 import type { Database } from "@/lib/supabase/database.types";
 
 let supabaseBrowserClient: SupabaseClient<Database> | null = null;
