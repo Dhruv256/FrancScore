@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { getAuthContext, isOnboardingComplete } from "@/lib/auth";
+import { resolveAuthState } from "@/lib/auth/resolve-auth-state";
 
 export const dynamic = "force-dynamic";
 
@@ -9,17 +9,17 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, profile } = await getAuthContext();
+  const authState = await resolveAuthState();
 
-  if (!user) {
+  if (authState.status === "anonymous") {
     redirect("/auth/login");
   }
 
-  if (!isOnboardingComplete(profile)) {
+  if (authState.status !== "ready") {
     redirect("/onboarding");
   }
 
-  if (profile?.role !== "ADMIN") {
+  if (authState.profile.role !== "ADMIN") {
     redirect("/dashboard");
   }
 

@@ -19,6 +19,7 @@ import {
   EXAM_TYPES,
   SKILLS,
 } from "@/lib/constants";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import type {
   CurrentLevelSelfAssessment,
   ExamType,
@@ -108,7 +109,12 @@ export function OnboardingForm({ profile }: OnboardingFormProps) {
       .eq("id", profile.id);
 
     if (error) {
-      setErrorMessage(error.message);
+      const formatted = formatSupabaseError(error, {
+        operation: "save onboarding profile",
+        table: "public.profiles",
+        env: "client",
+      });
+      setErrorMessage(formatted.userMessage);
       setIsSubmitting(false);
       return;
     }

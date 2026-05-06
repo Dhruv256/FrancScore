@@ -12,6 +12,7 @@ import {
   Headphones,
   Trophy,
   ClipboardList,
+  ListChecks,
   ArrowLeft,
   Shield,
 } from "lucide-react";
@@ -26,6 +27,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string; style?: 
   Headphones,
   Trophy,
   ClipboardList,
+  ListChecks,
 };
 
 const navItems = [
@@ -36,6 +38,7 @@ const navItems = [
   { label: "Writing Prompts", href: "/admin/writing", icon: "PenTool" },
   { label: "Speaking Prompts", href: "/admin/speaking", icon: "Mic" },
   { label: "Listening Audio", href: "/admin/listening", icon: "Headphones" },
+  { label: "Missions", href: "/admin/missions", icon: "ListChecks" },
   { label: "Badges", href: "/admin/badges", icon: "Trophy" },
   { label: "Mock Tests", href: "/admin/mocks", icon: "ClipboardList" },
 ];

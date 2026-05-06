@@ -52,6 +52,14 @@ const badgeCategorySchema = z.enum([
   "STREAK",
   "MASTERY",
 ]);
+const taskTypeSchema = z.enum([
+  "flashcards",
+  "listening",
+  "reading",
+  "writing",
+  "speaking",
+  "weakness_quest",
+]);
 
 const idSchema = z.string().uuid().optional();
 const booleanSchema = z.boolean().default(false);
@@ -210,6 +218,23 @@ export const listeningSchema = z.object({
   is_published: booleanSchema,
 });
 
+export const missionSchema = z.object({
+  id: idSchema,
+  title: z.string().trim().min(3),
+  description: z.string().trim().min(3),
+  skill_type: skillSchema,
+  task_type: taskTypeSchema,
+  exam_type: examScopeSchema,
+  cefr_level: cefrSchema,
+  target_count: z.coerce.number().int().min(1).default(1),
+  xp_reward: z.coerce.number().int().min(0).default(0),
+  estimated_minutes: z.coerce.number().int().min(0).default(0),
+  icon: z.string().trim().optional().transform((value) => value || null),
+  content_ref_type: z.string().trim().optional().transform((value) => value || null),
+  content_ref_id: z.string().uuid().or(z.literal("")).optional().transform((value) => value || null),
+  is_published: booleanSchema,
+});
+
 export const adminSchemas: Record<AdminResource, z.ZodSchema> = {
   passages: passageSchema,
   listening: listeningSchema,
@@ -219,6 +244,7 @@ export const adminSchemas: Record<AdminResource, z.ZodSchema> = {
   "speaking-prompts": speakingPromptSchema,
   badges: badgeSchema,
   "mock-tests": mockTestSchema,
+  missions: missionSchema,
 };
 
 export const adminMutationSchema = z.object({

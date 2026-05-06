@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { getAuthContext, getProfileDisplayName, isOnboardingComplete } from "@/lib/auth";
+import { getProfileDisplayName } from "@/lib/auth";
+import { resolveAuthState } from "@/lib/auth/resolve-auth-state";
 
 export const dynamic = "force-dynamic";
 
@@ -9,13 +10,13 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, profile } = await getAuthContext();
+  const authState = await resolveAuthState();
 
-  if (!user) {
+  if (authState.status === "anonymous") {
     redirect("/auth/login");
   }
 
-  if (!isOnboardingComplete(profile)) {
+  if (authState.status !== "ready") {
     redirect("/onboarding");
   }
 
@@ -23,9 +24,9 @@ export default async function DashboardLayout({
     <div className="app-shell min-h-screen">
       <Sidebar
         userSummary={{
-          fullName: getProfileDisplayName(profile, user),
-          totalXp: profile?.total_xp ?? 0,
-          currentStreak: profile?.current_streak ?? 0,
+          fullName: getProfileDisplayName(authState.profile, authState.user),
+          totalXp: authState.profile.total_xp,
+          currentStreak: authState.profile.current_streak,
         }}
       />
       <main className="lg:ml-64 min-h-screen">

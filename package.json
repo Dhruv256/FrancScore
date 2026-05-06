@@ -11,8 +11,13 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "db:migrate": "echo Apply supabase/migrations in order via Supabase CLI or the Supabase SQL Editor.",
-    "db:seed": "echo Apply supabase/seed.sql after migrations via Supabase CLI or the Supabase SQL Editor.",
-    "db:types": "echo Supabase CLI is not configured locally; regenerate src/lib/supabase/database.types.ts from a linked environment."
+    "db:seed": "echo Apply supabase/seed/francscore_initial_learning_data.sql after migrations via Supabase CLI or the Supabase SQL Editor.",
+    "db:run": "tsx scripts/run-sql-file.ts",
+    "db:types": "echo Supabase CLI is not configured locally; regenerate src/lib/supabase/database.types.ts from a linked environment.",
+    "import:vocabulary:csv": "tsx scripts/import-vocabulary-csv.ts",
+    "import:vocab": "tsx scripts/import-french-vocabulary.ts",
+    "generate:audio": "tsx scripts/generate-listening-audio.ts",
+    "report:learning": "tsx scripts/report-learning-counts.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -22,12 +27,15 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",
     "next": "^16.2.4",
+    "postgres": "^3.4.9",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hook-form": "^7.75.0",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
+    "ws": "^8.20.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -40,6 +48,7 @@
     "eslint-config-next": "^16.2.4",
     "postcss": "^8.5.13",
     "tailwindcss": "^4.2.4",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^2.1.9"
   }

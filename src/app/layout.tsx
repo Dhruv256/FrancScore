@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
+import { getPublicEnv } from "@/lib/env";
 import "./globals.css";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://francscore.app";
+const { NEXT_PUBLIC_APP_URL: APP_URL } = getPublicEnv();
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "FrancScore — AI Exam Coach for TEF & TCF Canada",
+    default: "FrancScore - AI Exam Coach for TEF & TCF Canada",
     template: "%s | FrancScore",
   },
   description:
-    "Master TEF Canada and TCF Canada with AI-powered diagnostics, daily practice drills, writing & speaking correction, and a gamified B2 Readiness Score.",
+    "Master TEF Canada and TCF Canada with AI-powered diagnostics, daily practice drills, writing and speaking correction, and a gamified B2 Readiness Score.",
   keywords: [
     "TEF Canada",
     "TCF Canada",
@@ -34,21 +35,21 @@ export const metadata: Metadata = {
     locale: "en_CA",
     url: APP_URL,
     siteName: "FrancScore",
-    title: "FrancScore — AI Exam Coach for TEF & TCF Canada",
+    title: "FrancScore - AI Exam Coach for TEF & TCF Canada",
     description:
-      "Master TEF Canada and TCF Canada with AI-powered diagnostics, daily practice drills, writing & speaking correction, and a gamified B2 Readiness Score.",
+      "Master TEF Canada and TCF Canada with AI-powered diagnostics, daily practice drills, writing and speaking correction, and a gamified B2 Readiness Score.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "FrancScore — AI-powered French exam prep",
+        alt: "FrancScore - AI-powered French exam prep",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FrancScore — AI Exam Coach for TEF & TCF Canada",
+    title: "FrancScore - AI Exam Coach for TEF & TCF Canada",
     description:
       "Master TEF Canada and TCF Canada with AI-powered diagnostics and a gamified B2 Readiness Score.",
     images: ["/og-image.png"],
@@ -67,7 +68,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=5"
+        />
       </head>
       <body className="min-h-screen bg-bg-primary text-text-primary antialiased">
         {children}

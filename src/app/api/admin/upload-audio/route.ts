@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/auth";
+import { getServerEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
@@ -20,10 +21,11 @@ export async function POST(request: Request) {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
   const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const supabase = createAdminClient();
+  const env = getServerEnv();
   const arrayBuffer = await file.arrayBuffer();
 
   const { error: uploadError } = await supabase.storage
-    .from("listening-audio")
+    .from(env.SUPABASE_LISTENING_AUDIO_BUCKET)
     .upload(path, arrayBuffer, {
       contentType: file.type || "application/octet-stream",
       upsert: false,
@@ -33,13 +35,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Audio upload failed. Make sure the Supabase Storage bucket 'listening-audio' exists and accepts uploads.",
+          "Audio upload failed. Make sure the configured Supabase Storage bucket exists and accepts uploads.",
         details: uploadError.message,
       },
       { status: 500 },
     );
   }
 
-  const { data } = supabase.storage.from("listening-audio").getPublicUrl(path);
+  const { data } = supabase.storage
+    .from(env.SUPABASE_LISTENING_AUDIO_BUCKET)
+    .getPublicUrl(path);
   return NextResponse.json({ path, publicUrl: data.publicUrl });
 }

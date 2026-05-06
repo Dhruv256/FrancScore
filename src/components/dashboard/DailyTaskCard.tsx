@@ -73,6 +73,19 @@ export function DailyTaskCard({ task, index }: Props) {
         <div className="text-xs text-text-muted truncate">
           {task.description}
         </div>
+        {typeof task.targetCount === "number" ? (
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/10">
+            <div
+              className="h-full rounded-full bg-brand-green"
+              style={{
+                width: `${Math.min(
+                  100,
+                  ((task.progressCount ?? 0) / Math.max(1, task.targetCount)) * 100,
+                )}%`,
+              }}
+            />
+          </div>
+        ) : null}
       </div>
 
       {/* Meta */}
@@ -85,6 +98,11 @@ export function DailyTaskCard({ task, index }: Props) {
           <Zap className="w-3 h-3" />
           +{task.xpReward}
         </div>
+        {typeof task.targetCount === "number" ? (
+          <div className="text-xs font-black text-text-muted">
+            {Math.min(task.progressCount ?? 0, task.targetCount)}/{task.targetCount}
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -26,6 +26,9 @@ export type PracticePassage = {
   id: string;
   title: string;
   content: string;
+  transcript: string | null;
+  audioUrl: string | null;
+  type: string | null;
   highlightedVocabulary: string[];
   wordCount: number | null;
   estimatedMinutes: number | null;

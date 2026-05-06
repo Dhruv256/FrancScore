@@ -101,27 +101,39 @@ export interface Database {
       };
       daily_tasks: {
         Row: {
+          cefr_level: string;
+          content_ref_id: string | null;
+          content_ref_type: string | null;
           created_at: string;
           created_by: string | null;
           description: string;
           estimated_minutes: number;
+          exam_type: string;
           icon: string | null;
           id: string;
           is_published: boolean;
           skill_type: string;
+          target_count: number;
+          task_type: string | null;
           title: string;
           updated_at: string;
           xp_reward: number;
         };
         Insert: {
+          cefr_level?: string;
+          content_ref_id?: string | null;
+          content_ref_type?: string | null;
           created_at?: string;
           created_by?: string | null;
           description: string;
           estimated_minutes?: number;
+          exam_type?: string;
           icon?: string | null;
           id?: string;
           is_published?: boolean;
           skill_type: string;
+          target_count?: number;
+          task_type?: string | null;
           title: string;
           updated_at?: string;
           xp_reward?: number;
@@ -257,6 +269,7 @@ export interface Database {
       };
       passages: {
         Row: {
+          audio_url: string | null;
           content: string;
           created_at: string;
           created_by: string | null;
@@ -266,12 +279,16 @@ export interface Database {
           highlighted_vocabulary: string[] | null;
           id: string;
           is_published: boolean;
+          skill: string | null;
           title: string;
           topic: string | null;
+          transcript: string | null;
+          type: string;
           updated_at: string;
           word_count: number | null;
         };
         Insert: {
+          audio_url?: string | null;
           content: string;
           created_at?: string;
           created_by?: string | null;
@@ -281,8 +298,11 @@ export interface Database {
           highlighted_vocabulary?: string[] | null;
           id?: string;
           is_published?: boolean;
+          skill?: string | null;
           title: string;
           topic?: string | null;
+          transcript?: string | null;
+          type?: string;
           updated_at?: string;
           word_count?: number | null;
         };
@@ -565,28 +585,38 @@ export interface Database {
       };
       weakness_quests: {
         Row: {
+          cefr_level: string;
+          content_ref_id: string | null;
+          content_ref_type: string | null;
           created_at: string;
           created_by: string | null;
           description: string;
           difficulty: string;
+          exam_type: string;
           id: string;
           is_published: boolean;
           questions_count: number;
           skill_type: string;
+          target_count: number;
           title: string;
           trap_type: string | null;
           updated_at: string;
           xp_reward: number;
         };
         Insert: {
+          cefr_level?: string;
+          content_ref_id?: string | null;
+          content_ref_type?: string | null;
           created_at?: string;
           created_by?: string | null;
           description: string;
           difficulty?: string;
+          exam_type?: string;
           id?: string;
           is_published?: boolean;
           questions_count?: number;
           skill_type: string;
+          target_count?: number;
           title: string;
           trap_type?: string | null;
           updated_at?: string;

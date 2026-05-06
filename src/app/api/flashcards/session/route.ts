@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/auth";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import {
   completeFlashcardSession,
   startFlashcardSession,
@@ -38,10 +39,17 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(data);
   } catch (error) {
+    const formatted = formatSupabaseError(error, {
+      operation: "start flashcard session",
+      table: "public.flashcard_sessions",
+      env: "server",
+    });
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Unable to start flashcard session.",
+        error: formatted.userMessage,
+        ...(process.env.NODE_ENV === "development"
+          ? { details: formatted.developerMessage }
+          : {}),
       },
       { status: 500 },
     );
@@ -65,10 +73,17 @@ export async function PATCH(request: Request) {
     await completeFlashcardSession(body.sessionId);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    const formatted = formatSupabaseError(error, {
+      operation: "complete flashcard session",
+      table: "public.flashcard_sessions",
+      env: "server",
+    });
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Unable to complete flashcard session.",
+        error: formatted.userMessage,
+        ...(process.env.NODE_ENV === "development"
+          ? { details: formatted.developerMessage }
+          : {}),
       },
       { status: 500 },
     );

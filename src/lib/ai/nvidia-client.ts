@@ -2,11 +2,8 @@ import "server-only";
 
 import { z } from "zod";
 import { getServerEnv } from "@/lib/env";
-import {
-  NVIDIA_MODELS,
-  type NvidiaModelId,
-  type NvidiaModelPurpose,
-} from "@/lib/ai/models";
+import type { NvidiaModelId, NvidiaModelPurpose } from "@/lib/ai/models";
+import { getAIModelCatalog } from "@/lib/constants/ai-models";
 
 type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -61,7 +58,7 @@ export function isNvidiaEnabled() {
 
 export function isNvidiaPurposeEnabled(purpose: NvidiaModelPurpose) {
   const env = getServerEnv();
-  return Boolean(getApiKeyForPurpose(env, purpose));
+  return isFeatureEnabledForPurpose(env, purpose) && Boolean(getApiKeyForPurpose(env, purpose));
 }
 
 export function getConfiguredModelId(purpose: NvidiaModelPurpose): NvidiaModelId {
@@ -236,10 +233,10 @@ async function nvidiaFetch(path: string, init: RequestInit, purpose: NvidiaModel
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), env.NVIDIA_BUILD_API_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), env.NVIDIA_AI_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${env.NVIDIA_BUILD_API_BASE_URL}${path}`, {
+    const response = await fetch(`${env.NVIDIA_API_BASE_URL}${path}`, {
       ...init,
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -325,4 +322,34 @@ function getMissingKeyMessage(purpose: NvidiaModelPurpose) {
   }
 }
 
-export const NVIDIA_MODEL_INFO = NVIDIA_MODELS;
+function isFeatureEnabledForPurpose(
+  env: ReturnType<typeof getServerEnv>,
+  purpose: NvidiaModelPurpose,
+) {
+  switch (purpose) {
+    case "MAIN":
+      return (
+        env.AI_ENABLE_WRITING_EVALUATION ||
+        env.AI_ENABLE_SPEAKING_EVALUATION ||
+        env.AI_ENABLE_STUDY_PLAN ||
+        env.AI_ENABLE_ADMIN_GENERATION
+      );
+    case "RERANKER":
+      return env.AI_ENABLE_RERANKING;
+    case "SAFETY":
+      return env.AI_ENABLE_SAFETY_CHECK;
+    case "SPEECH_TO_TEXT":
+      return env.AI_ENABLE_STT;
+  }
+}
+
+export function getNvidiaModelInfo() {
+  const env = getServerEnv();
+
+  return getAIModelCatalog({
+    mainModel: env.NVIDIA_MAIN_MODEL,
+    rerankModel: env.NVIDIA_RERANK_MODEL,
+    safetyModel: env.NVIDIA_SAFETY_MODEL,
+    sttModel: env.NVIDIA_STT_MODEL,
+  });
+}

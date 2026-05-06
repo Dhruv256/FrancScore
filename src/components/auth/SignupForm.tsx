@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff, Lock, Mail, Sparkles, User } from "lucide-react";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { createClient } from "@/lib/supabase/client";
 
 export function SignupForm() {
@@ -30,16 +31,31 @@ export function SignupForm() {
     });
 
     if (error) {
-      setErrorMessage(error.message);
+      const formatted = formatSupabaseError(error, {
+        operation: "create account",
+        env: "client",
+      });
+      setErrorMessage(formatted.userMessage);
       setIsSubmitting(false);
       return;
     }
 
     if (data.user && data.session) {
-      await supabase.from("profiles").upsert(
+      const { error: profileError } = await supabase.from("profiles").upsert(
         { id: data.user.id, email, full_name: name },
         { onConflict: "id" },
       );
+
+      if (profileError) {
+        const formatted = formatSupabaseError(profileError, {
+          operation: "bootstrap profile after signup",
+          table: "public.profiles",
+          env: "client",
+        });
+        setErrorMessage(formatted.userMessage);
+        setIsSubmitting(false);
+        return;
+      }
 
       router.replace("/onboarding");
       router.refresh();
@@ -57,7 +73,7 @@ export function SignupForm() {
       <div className="relative z-10 grid w-full max-w-6xl gap-5 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="surface-panel flex min-h-[700px] flex-col justify-center rounded-[2rem] p-5 sm:p-8">
           <Link href="/" className="mb-10 flex items-center gap-2">
-            <div className="grid h-11 w-11 place-items-center rounded-full gradient-green text-base font-black text-text-inverse shadow-[0_0_34px_rgba(184,255,56,0.25)]">
+            <div className="grid h-11 w-11 place-items-center rounded-full gradient-green text-base font-black text-text-inverse shadow-[0_0_30px_rgba(182,197,111,0.22)]">
               F
             </div>
             <span className="text-2xl font-black">

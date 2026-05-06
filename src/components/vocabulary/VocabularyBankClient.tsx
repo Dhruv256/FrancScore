@@ -53,24 +53,29 @@ export function VocabularyBankClient({ words }: { words: VocabularyWord[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 mb-1">
-            <Library className="w-6 h-6 text-accent-cyan" />
-            Vocabulary Bank
-          </h1>
-          <p className="text-sm text-text-secondary">
-            {stats.total} words · {stats.mastered} mastered · {stats.weak} weak
-          </p>
+      <div className="surface-panel rounded-[2rem] p-5 sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="page-kicker mb-3">
+              <Library className="w-4 h-4" />
+              Real study inventory
+            </p>
+            <h1 className="text-3xl font-black text-text-primary sm:text-4xl">
+              Vocabulary Bank
+            </h1>
+            <p className="mt-2 text-sm text-text-secondary">
+              {stats.total} live words · {stats.mastered} mastered · {stats.weak} weak
+            </p>
+          </div>
+          <Link href="/vocabulary/flashcards" className="btn btn-primary">
+            <Layers className="w-4 h-4" />
+            Start Flashcards
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
-        <Link href="/vocabulary/flashcards" className="btn btn-primary">
-          <Layers className="w-4 h-4" />
-          Start Flashcards
-          <ArrowRight className="w-4 h-4" />
-        </Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="New" value={stats.newCount} valueClassName="text-accent-blue" />
         <StatCard label="Learning" value={stats.learning} valueClassName="text-accent-amber" />
         <StatCard label="Weak" value={stats.weak} valueClassName="text-accent-rose" />
@@ -83,7 +88,10 @@ export function VocabularyBankClient({ words }: { words: VocabularyWord[] }) {
           <span className="text-sm text-brand-green font-medium">{masteryPercentage}%</span>
         </div>
         <div className="progress-bar h-3">
-          <div className="progress-fill progress-fill-green h-3" style={{ width: `${masteryPercentage}%` }} />
+          <div
+            className="progress-fill progress-fill-green h-3"
+            style={{ width: `${masteryPercentage}%` }}
+          />
         </div>
       </div>
 
@@ -98,14 +106,22 @@ export function VocabularyBankClient({ words }: { words: VocabularyWord[] }) {
             placeholder="Search words..."
           />
         </div>
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as VocabStatus | "ALL")} className="input w-auto">
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value as VocabStatus | "ALL")}
+          className="input w-auto"
+        >
           <option value="ALL">All Status</option>
           <option value="NEW">New</option>
           <option value="LEARNING">Learning</option>
           <option value="WEAK">Weak</option>
           <option value="MASTERED">Mastered</option>
         </select>
-        <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value as CEFRLevel | "ALL")} className="input w-auto">
+        <select
+          value={levelFilter}
+          onChange={(event) => setLevelFilter(event.target.value as CEFRLevel | "ALL")}
+          className="input w-auto"
+        >
           <option value="ALL">All Levels</option>
           {CEFR_LEVELS.map((level) => (
             <option key={level} value={level}>
@@ -113,7 +129,11 @@ export function VocabularyBankClient({ words }: { words: VocabularyWord[] }) {
             </option>
           ))}
         </select>
-        <select value={topicFilter} onChange={(event) => setTopicFilter(event.target.value as TopicType | "ALL")} className="input w-auto">
+        <select
+          value={topicFilter}
+          onChange={(event) => setTopicFilter(event.target.value as TopicType | "ALL")}
+          className="input w-auto"
+        >
           <option value="ALL">All Topics</option>
           {VOCAB_TOPICS.map((topic) => (
             <option key={topic} value={topic}>
@@ -124,15 +144,15 @@ export function VocabularyBankClient({ words }: { words: VocabularyWord[] }) {
       </div>
 
       {filtered.length ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {filtered.map((word) => {
             const status = word.status ?? "NEW";
             const statusColor = statusColors[status];
             return (
-              <div key={word.id} className="card group">
-                <div className="flex items-start justify-between mb-2">
+              <div key={word.id} className="card group rounded-[1.75rem]">
+                <div className="flex items-start justify-between mb-2 gap-4">
                   <div>
-                    <h3 className="text-base font-bold text-text-primary">{word.frenchWord}</h3>
+                    <h3 className="text-lg font-black text-text-primary">{word.frenchWord}</h3>
                     <p className="text-sm text-text-secondary">{word.englishMeaning}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -143,15 +163,19 @@ export function VocabularyBankClient({ words }: { words: VocabularyWord[] }) {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-bg-input mb-3">
-                  <p className="text-xs text-text-secondary italic">FR: {word.frenchExample ?? "Example coming soon."}</p>
-                  <p className="text-xs text-text-muted mt-1">EN: {word.englishExampleTranslation ?? "Translation coming soon."}</p>
+                <div className="mb-3 rounded-[1.25rem] border border-white/8 bg-[rgba(244,238,221,0.06)] p-4">
+                  <p className="text-xs italic text-text-secondary">
+                    FR: {word.frenchExample ?? "Example coming soon."}
+                  </p>
+                  <p className="mt-2 text-xs text-text-muted">
+                    EN: {word.englishExampleTranslation ?? "Translation coming soon."}
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex flex-wrap gap-1">
-                    {word.tags.slice(0, 3).map((tag) => (
-                      <span key={tag} className="badge badge-purple text-[10px]">
+                    {word.tags.slice(0, 3).map((tag, index) => (
+                      <span key={`${word.id}-${tag}-${index}`} className="badge badge-purple text-[10px]">
                         {tag}
                       </span>
                     ))}
@@ -163,10 +187,19 @@ export function VocabularyBankClient({ words }: { words: VocabularyWord[] }) {
           })}
         </div>
       ) : (
-        <div className="card p-12 text-center">
+        <div className="surface-panel rounded-[2rem] p-8 text-center sm:p-12">
           <Library className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-20" />
-          <h3 className="text-sm font-semibold text-text-muted mb-2">No words found</h3>
-          <p className="text-xs text-text-muted">Try adjusting your filters or search query.</p>
+          <p className="page-kicker justify-center mb-3">Live vocabulary only</p>
+          <h3 className="text-xl font-black text-text-primary mb-2">
+            No Supabase vocabulary matches this view.
+          </h3>
+          <p className="mx-auto max-w-lg text-sm leading-6 text-text-secondary">
+            Adjust your filters, seed
+            {" "}
+            <code>supabase/seed/francscore_initial_learning_data.sql</code>
+            {" "}
+            or import a CSV through the new vocabulary pipeline to populate real study words.
+          </p>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import { getAuthContext } from "@/lib/auth";
 import { adminMutationSchema, adminSchemas } from "@/lib/admin/schemas";
 import { listAdminResource } from "@/lib/admin/server";
 import type { AdminResource } from "@/lib/admin/types";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const VALID_RESOURCES = new Set<AdminResource>([
@@ -14,6 +15,7 @@ const VALID_RESOURCES = new Set<AdminResource>([
   "speaking-prompts",
   "badges",
   "mock-tests",
+  "missions",
 ]);
 
 export async function GET(
@@ -35,8 +37,18 @@ export async function GET(
     const records = await listAdminResource(resource, filters);
     return NextResponse.json({ records });
   } catch (error) {
+    const formatted = formatSupabaseError(error, {
+      operation: `load admin resource ${resource}`,
+      table: getResourceTableName(resource),
+      env: "server",
+    });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to load records." },
+      {
+        error: formatted.userMessage,
+        ...(process.env.NODE_ENV === "development"
+          ? { details: formatted.developerMessage }
+          : {}),
+      },
       { status: 500 },
     );
   }
@@ -105,8 +117,18 @@ export async function POST(
     );
     return NextResponse.json({ record });
   } catch (error) {
+    const formatted = formatSupabaseError(error, {
+      operation: `save admin resource ${resource}`,
+      table: getResourceTableName(resource),
+      env: "server",
+    });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to save record." },
+      {
+        error: formatted.userMessage,
+        ...(process.env.NODE_ENV === "development"
+          ? { details: formatted.developerMessage }
+          : {}),
+      },
       { status: 500 },
     );
   }
@@ -125,6 +147,23 @@ async function requireAdmin() {
 
 function isValidResource(resource: string): resource is AdminResource {
   return VALID_RESOURCES.has(resource as AdminResource);
+}
+
+function getResourceTableName(resource: AdminResource) {
+  switch (resource) {
+    case "writing-prompts":
+      return "public.writing_prompts";
+    case "speaking-prompts":
+      return "public.speaking_prompts";
+    case "mock-tests":
+      return "public.mock_tests";
+    case "missions":
+      return "public.daily_tasks";
+    case "listening":
+      return "public.questions";
+    default:
+      return `public.${resource}`;
+  }
 }
 
 async function createRecord(resource: AdminResource, payload: Record<string, unknown>, userId: string) {
@@ -224,6 +263,15 @@ async function createRecord(resource: AdminResource, payload: Record<string, unk
       if (error) throw new Error(error.message);
       await replaceMockSections(data.id, Array.isArray(sections) ? sections : []);
       return { ...data, sections };
+    }
+    case "missions": {
+      const { data, error } = await supabase
+        .from("daily_tasks")
+        .insert({ ...payload, created_by: userId })
+        .select("*")
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
     }
   }
 }
@@ -331,6 +379,16 @@ async function updateRecord(
       await replaceMockSections(recordId, Array.isArray(sections) ? sections : []);
       return { ...data, sections };
     }
+    case "missions": {
+      const { data, error } = await supabase
+        .from("daily_tasks")
+        .update(payload)
+        .eq("id", recordId)
+        .select("*")
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    }
   }
 }
 
@@ -344,6 +402,8 @@ async function deleteRecord(resource: AdminResource, recordId: string) {
       ? "speaking_prompts"
       : resource === "mock-tests"
       ? "mock_tests"
+      : resource === "missions"
+      ? "daily_tasks"
       : resource === "listening"
       ? "questions"
       : resource;

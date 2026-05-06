@@ -6,7 +6,8 @@ export type AdminResource =
   | "writing-prompts"
   | "speaking-prompts"
   | "badges"
-  | "mock-tests";
+  | "mock-tests"
+  | "missions";
 
 export type AdminFieldType =
   | "text"

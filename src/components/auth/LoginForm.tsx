@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles } from "lucide-react";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
@@ -23,7 +24,11 @@ export function LoginForm() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setErrorMessage(error.message);
+      const formatted = formatSupabaseError(error, {
+        operation: "sign in",
+        env: "client",
+      });
+      setErrorMessage(formatted.userMessage);
       setIsSubmitting(false);
       return;
     }
@@ -39,7 +44,7 @@ export function LoginForm() {
 
         <div className="surface-panel flex min-h-[680px] flex-col justify-center rounded-[2rem] p-5 sm:p-8">
           <Link href="/" className="mb-10 flex items-center gap-2">
-            <div className="grid h-11 w-11 place-items-center rounded-full gradient-green text-base font-black text-text-inverse shadow-[0_0_34px_rgba(184,255,56,0.25)]">
+            <div className="grid h-11 w-11 place-items-center rounded-full gradient-green text-base font-black text-text-inverse shadow-[0_0_30px_rgba(182,197,111,0.22)]">
               F
             </div>
             <span className="text-2xl font-black">

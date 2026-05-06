@@ -78,7 +78,7 @@ export function ProgressPageClient({
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#64748b" }} tickFormatter={(value) => value.slice(8)} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} />
                   <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} />
                   <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="xp" fill="#76b900" radius={[4, 4, 0, 0]} name="XP" />
+                  <Bar dataKey="xp" fill="#b6c56f" radius={[4, 4, 0, 0]} name="XP" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (

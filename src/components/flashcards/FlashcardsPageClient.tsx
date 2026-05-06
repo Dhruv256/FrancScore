@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
   ArrowLeft,
   Check,
+  Headphones,
   Keyboard,
   Layers,
+  Library,
+  Link as LinkIcon,
   RotateCcw,
+  Settings,
+  ShieldAlert,
+  Tag,
+  TrendingUp,
   Trophy,
   Zap,
 } from "lucide-react";
@@ -29,6 +36,7 @@ import type {
 } from "@/lib/flashcards/types";
 import type {
   CEFRLevel,
+  FlashcardDeckType,
   ExamType,
   FlashcardReviewRating,
   FlashcardSession,
@@ -51,6 +59,17 @@ const statusColors: Record<VocabularyStatus, { bg: string; text: string }> = {
   LEARNING: { bg: "bg-accent-amber/10", text: "text-accent-amber" },
   WEAK: { bg: "bg-accent-rose/10", text: "text-accent-rose" },
   MASTERED: { bg: "bg-status-success/10", text: "text-status-success" },
+};
+
+const deckModeIcons: Record<FlashcardDeckType, ComponentType<{ className?: string }>> = {
+  ALL: Library,
+  WEAK_WORDS: AlertTriangle,
+  HIGH_FREQUENCY: TrendingUp,
+  TOPIC: Tag,
+  TRAP_WORDS: ShieldAlert,
+  CONNECTORS: LinkIcon,
+  LISTENING_TRAPS: Headphones,
+  CUSTOM: Settings,
 };
 
 export function FlashcardsPageClient({
@@ -370,7 +389,7 @@ export function FlashcardsPageClient({
   if (!started) {
     return (
       <div className="space-y-6">
-        <div className="surface-panel overflow-hidden rounded-[2rem] p-5 sm:p-7">
+        <div className="card-soft overflow-hidden rounded-[2rem] p-5 sm:p-7">
           <div className="absolute inset-x-0 top-0 h-px gradient-purple" />
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
@@ -379,7 +398,7 @@ export function FlashcardsPageClient({
               Unlimited spaced repetition
             </div>
             <h1 className="display-title text-5xl sm:text-6xl flex items-center gap-2 mb-2">
-              <Layers className="w-6 h-6 text-brand-purple" />
+              <Layers className="w-6 h-6 text-brand-green" />
               Flashcards
             </h1>
             <p className="text-sm text-text-secondary">
@@ -413,30 +432,36 @@ export function FlashcardsPageClient({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {FLASHCARD_MODES.map((mode) => (
+          {FLASHCARD_MODES.map((mode) => {
+            const ModeIcon = deckModeIcons[mode.id];
+
+            return (
             <button
               key={mode.id}
               type="button"
               onClick={() =>
                 updateFilter((current) => ({ ...current, deckType: mode.id }))
               }
-              className={`card min-h-36 text-left transition-all ${
+              className={`card-soft min-h-36 text-left transition-all ${
                 filter.deckType === mode.id
-                  ? "border-brand-purple/40 bg-brand-purple/5"
+                  ? "border-brand-green/45 bg-brand-green/10 shadow-[0_18px_50px_rgba(255,122,26,0.14)]"
                   : ""
               }`}
             >
-              <div className="text-xl mb-2">{mode.emoji}</div>
+              <div className="mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-[#111111] text-brand-green">
+                <ModeIcon className="h-5 w-5" />
+              </div>
               <h3 className="text-sm font-black">{mode.label}</h3>
               <p className="text-xs text-text-muted mt-1">
                 {filter.deckType === mode.id ? cards.length : ""}
                 {filter.deckType === mode.id ? " cards ready" : "Choose this deck"}
               </p>
             </button>
-          ))}
+            );
+          })}
         </div>
 
-        <div className="surface-panel rounded-[2rem] p-5">
+        <div className="card-soft rounded-[2rem] p-5">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <label className="space-y-1">
               <span className="text-xs text-text-muted">CEFR</span>
@@ -562,7 +587,7 @@ export function FlashcardsPageClient({
             </p>
           </div>
         ) : (
-          <div className="surface-panel rounded-[2rem] p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="card-dark-premium rounded-[2rem] p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <div className="text-sm text-text-muted mb-1">
                 Selected Deck
@@ -592,7 +617,7 @@ export function FlashcardsPageClient({
   if (sessionComplete && session) {
     return (
       <div className="max-w-2xl mx-auto space-y-6 py-8">
-        <div className="surface-panel p-8 text-center card-glow-green rounded-[2rem]">
+        <div className="card-soft p-8 text-center card-glow-green rounded-[2rem]">
           <Trophy className="w-16 h-16 text-accent-amber mx-auto mb-4" />
           <h2 className="text-4xl font-black mb-2">Session Complete</h2>
           <p className="text-sm text-text-secondary mb-6">
@@ -643,7 +668,7 @@ export function FlashcardsPageClient({
           <span className="text-sm text-text-muted">
             {currentIndex + 1} / {cards.length}
           </span>
-          <span className="badge badge-purple">{FLASHCARD_DECK_LABELS[session.deckType]}</span>
+          <span className="badge badge-green">{FLASHCARD_DECK_LABELS[session.deckType]}</span>
           <span className="flex items-center gap-1 text-xs text-brand-green">
             <Zap className="w-3 h-3" />
             {session.xpEarned} XP
@@ -676,7 +701,7 @@ export function FlashcardsPageClient({
           style={{ minHeight: "430px" }}
         >
           <div
-            className="flashcard-front surface-panel card-glow-purple p-8 flex flex-col items-center justify-center text-center"
+            className="flashcard-front card-dark-premium p-8 flex flex-col items-center justify-center text-center"
             style={{ minHeight: "430px" }}
           >
             <div className="flex items-center gap-2 mb-6 flex-wrap justify-center">
@@ -688,13 +713,13 @@ export function FlashcardsPageClient({
                 {formatVocabularyStatus(currentCard.status)}
               </span>
             </div>
-            <h2 className="display-title text-6xl sm:text-7xl mb-5 gradient-text-hero break-words">
+            <h2 className="display-title text-6xl sm:text-7xl mb-5 text-text-inverse break-words">
               {currentCard.frenchWord}
             </h2>
             <p className="text-sm font-bold text-text-muted">Tap the card or press Space to flip</p>
           </div>
 
-          <div className="flashcard-back surface-panel p-6 sm:p-8" style={{ minHeight: "430px" }}>
+          <div className="flashcard-back card-soft p-6 sm:p-8" style={{ minHeight: "430px" }}>
             <div className="flex items-center gap-2 mb-4 flex-wrap">
               <span className="badge badge-blue">{formatCEFRLevel(currentCard.cefrLevel)}</span>
               {currentCard.topic ? (
@@ -713,7 +738,7 @@ export function FlashcardsPageClient({
               <p className="text-2xl text-brand-green font-black">{currentCard.englishMeaning}</p>
             </div>
 
-            <div className="p-5 rounded-3xl bg-white/[0.055] border border-white/10 space-y-3">
+            <div className="p-5 rounded-3xl bg-[#fffaf0]/80 border border-[rgba(17,17,17,0.08)] space-y-3">
               {currentCard.frenchExample ? (
                 <p className="text-sm text-text-secondary">
                   <span className="text-xs text-brand-green font-medium mr-2">FR:</span>

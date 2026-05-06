@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/auth";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { getFlashcardDeck } from "@/lib/flashcards/server";
 import type { FlashcardDeckFilter } from "@/lib/flashcards/types";
 
@@ -23,10 +24,17 @@ export async function GET(request: Request) {
     const data = await getFlashcardDeck(user.id, filter);
     return NextResponse.json(data);
   } catch (error) {
+    const formatted = formatSupabaseError(error, {
+      operation: "load flashcard deck",
+      table: "public.vocabulary",
+      env: "server",
+    });
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Unable to load flashcard deck.",
+        error: formatted.userMessage,
+        ...(process.env.NODE_ENV === "development"
+          ? { details: formatted.developerMessage }
+          : {}),
       },
       { status: 500 },
     );

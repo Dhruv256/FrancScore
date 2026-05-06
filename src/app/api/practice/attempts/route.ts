@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/auth";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { submitPracticeAttempt } from "@/lib/practice/server";
 import type { PracticeAttemptRequest } from "@/lib/practice/types";
 
@@ -31,8 +32,18 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
+    const formatted = formatSupabaseError(error, {
+      operation: "save practice attempt",
+      table: "public.attempts",
+      env: "server",
+    });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to save attempt." },
+      {
+        error: formatted.userMessage,
+        ...(process.env.NODE_ENV === "development"
+          ? { details: formatted.developerMessage }
+          : {}),
+      },
       { status: 500 },
     );
   }

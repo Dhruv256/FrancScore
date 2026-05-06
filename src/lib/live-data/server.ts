@@ -14,7 +14,7 @@ import type {
 type VocabularyRow = Database["public"]["Tables"]["vocabulary"]["Row"];
 type WordBankRow = Database["public"]["Tables"]["user_word_bank"]["Row"];
 
-export async function getPublishedDailyTasks(): Promise<DailyTask[]> {
+export async function getPublishedDailyTasks(userId?: string): Promise<DailyTask[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("daily_tasks")
@@ -27,7 +27,14 @@ export async function getPublishedDailyTasks(): Promise<DailyTask[]> {
     throw new Error(error.message);
   }
 
-  return (data ?? []).map((row, index) => ({
+  const progress = userId ? await getDailyTaskProgress(userId) : new Map<string, number>();
+
+  return (data ?? []).map((row) => {
+    const taskType = row.task_type ?? normalizeTaskType(row.skill_type);
+    const targetCount = Math.max(1, row.target_count ?? 1);
+    const progressCount = progress.get(taskType) ?? 0;
+
+    return {
     id: row.id,
     title: row.title,
     description: row.description,
@@ -35,8 +42,84 @@ export async function getPublishedDailyTasks(): Promise<DailyTask[]> {
     xpReward: row.xp_reward,
     estimatedMinutes: row.estimated_minutes,
     icon: row.icon ?? inferTaskIcon(row.skill_type),
-    status: index < 3 ? "PENDING" : "LOCKED",
-  }));
+      status: progressCount >= targetCount ? "DONE" : "PENDING",
+      taskType,
+      targetCount,
+      progressCount,
+    };
+  });
+}
+
+async function getDailyTaskProgress(userId: string) {
+  const supabase = await createClient();
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const startIso = startOfDay.toISOString();
+
+  const [
+    attemptsResult,
+    flashcardsResult,
+    writingResult,
+    speakingResult,
+  ] = await Promise.all([
+    supabase
+      .from("attempts")
+      .select("question_id")
+      .eq("user_id", userId)
+      .gte("submitted_at", startIso),
+    supabase
+      .from("flashcard_reviews")
+      .select("id")
+      .eq("user_id", userId)
+      .gte("reviewed_at", startIso),
+    supabase
+      .from("writing_submissions")
+      .select("id")
+      .eq("user_id", userId)
+      .gte("created_at", startIso),
+    supabase
+      .from("speaking_submissions")
+      .select("id")
+      .eq("user_id", userId)
+      .gte("created_at", startIso),
+  ]);
+
+  if (attemptsResult.error) throw new Error(attemptsResult.error.message);
+  if (flashcardsResult.error) throw new Error(flashcardsResult.error.message);
+  if (writingResult.error) throw new Error(writingResult.error.message);
+  if (speakingResult.error) throw new Error(speakingResult.error.message);
+
+  const progress = new Map<string, number>([
+    ["flashcards", flashcardsResult.data?.length ?? 0],
+    ["writing", writingResult.data?.length ?? 0],
+    ["speaking", speakingResult.data?.length ?? 0],
+  ]);
+
+  const questionIds = [...new Set((attemptsResult.data ?? []).map((row) => row.question_id))];
+  if (questionIds.length) {
+    const { data: questionRows, error } = await supabase
+      .from("questions")
+      .select("id, skill_type")
+      .in("id", questionIds);
+
+    if (error) throw new Error(error.message);
+
+    const skillByQuestionId = new Map((questionRows ?? []).map((row) => [row.id, row.skill_type]));
+    let readingCount = 0;
+    let listeningCount = 0;
+
+    for (const attempt of attemptsResult.data ?? []) {
+      const skill = skillByQuestionId.get(attempt.question_id);
+      if (skill === "READING") readingCount += 1;
+      if (skill === "LISTENING") listeningCount += 1;
+    }
+
+    progress.set("reading", readingCount);
+    progress.set("listening", listeningCount);
+    progress.set("weakness_quest", readingCount + listeningCount);
+  }
+
+  return progress;
 }
 
 export async function getVocabularyBankWords(userId: string): Promise<VocabularyWord[]> {
@@ -240,6 +323,21 @@ function normalizeSkill(value: string): DailyTask["skill"] {
   }
 
   return "VOCABULARY";
+}
+
+function normalizeTaskType(skill: string) {
+  switch (skill) {
+    case "LISTENING":
+      return "listening";
+    case "READING":
+      return "reading";
+    case "WRITING":
+      return "writing";
+    case "SPEAKING":
+      return "speaking";
+    default:
+      return "flashcards";
+  }
 }
 
 function inferTaskIcon(skill: string) {

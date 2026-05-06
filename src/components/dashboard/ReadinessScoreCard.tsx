@@ -45,7 +45,7 @@ export function ReadinessScoreCard({ score }: Props) {
 
       <div className="relative z-10 grid gap-6 lg:grid-cols-[190px_minmax(0,1fr)] lg:items-center">
         <div className="relative mx-auto h-44 w-44 shrink-0 lg:mx-0">
-          <svg className="h-44 w-44 -rotate-90 drop-shadow-[0_0_30px_rgba(184,255,56,0.16)]" viewBox="0 0 120 120">
+          <svg className="h-44 w-44 -rotate-90 drop-shadow-[0_0_28px_rgba(182,197,111,0.16)]" viewBox="0 0 120 120">
             <circle
               cx="60"
               cy="60"
@@ -68,8 +68,8 @@ export function ReadinessScoreCard({ score }: Props) {
             />
             <defs>
               <linearGradient id="greenGradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#76b900" />
-                <stop offset="100%" stopColor="#93d400" />
+                <stop offset="0%" stopColor="#d8dda5" />
+                <stop offset="100%" stopColor="#b6c56f" />
               </linearGradient>
             </defs>
           </svg>

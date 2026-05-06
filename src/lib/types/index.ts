@@ -335,6 +335,9 @@ export interface DailyTask {
   status: TaskStatus;
   estimatedMinutes: number;
   icon: string;
+  taskType?: string;
+  targetCount?: number;
+  progressCount?: number;
 }
 
 export interface WeaknessQuest {

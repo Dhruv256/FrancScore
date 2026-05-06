@@ -13,6 +13,7 @@ import {
   runSafetyCheck,
 } from "@/lib/ai/nvidia-client";
 import { XP_REWARDS, applyXpAndStreak } from "@/lib/gamification/xp";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import type { WritingFeedback } from "@/lib/types";
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
         modelId: isNvidiaEnabled() ? getConfiguredModelId("MAIN") : "fallback-writing-review",
       });
 
-      await supabase
+      const { error: updateError } = await supabase
         .from("writing_submissions")
         .update({
           review_result: feedback as unknown as Database["public"]["Tables"]["writing_submissions"]["Row"]["review_result"],
@@ -108,6 +109,16 @@ export async function POST(request: Request) {
         })
         .eq("id", context.submissionId)
         .eq("user_id", user.id);
+
+      if (updateError) {
+        throw new Error(
+          formatSupabaseError(updateError, {
+            operation: "save writing review",
+            table: "public.writing_submissions",
+            env: "server",
+          }).developerMessage,
+        );
+      }
 
       if (context.isNewSubmission) {
         await applyXpAndStreak(user.id, XP_REWARDS.WRITING_SUBMISSION, context.submittedAt);
@@ -144,7 +155,7 @@ export async function POST(request: Request) {
         modelId: "fallback-writing-review",
       });
 
-      await supabase
+      const { error: updateError } = await supabase
         .from("writing_submissions")
         .update({
           review_result: feedback as unknown as Database["public"]["Tables"]["writing_submissions"]["Row"]["review_result"],
@@ -154,6 +165,16 @@ export async function POST(request: Request) {
         })
         .eq("id", context.submissionId)
         .eq("user_id", user.id);
+
+      if (updateError) {
+        throw new Error(
+          formatSupabaseError(updateError, {
+            operation: "save fallback writing review",
+            table: "public.writing_submissions",
+            env: "server",
+          }).developerMessage,
+        );
+      }
 
       if (context.isNewSubmission) {
         await applyXpAndStreak(user.id, XP_REWARDS.WRITING_SUBMISSION, context.submittedAt);
@@ -191,7 +212,22 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to evaluate writing." },
+      {
+        error: formatSupabaseError(error, {
+          operation: "evaluate writing submission",
+          table: "public.writing_submissions",
+          env: "server",
+        }).userMessage,
+        ...(process.env.NODE_ENV === "development"
+          ? {
+              details: formatSupabaseError(error, {
+                operation: "evaluate writing submission",
+                table: "public.writing_submissions",
+                env: "server",
+              }).developerMessage,
+            }
+          : {}),
+      },
       { status: 500 },
     );
   }
@@ -269,7 +305,13 @@ async function resolveWritingContext(
     .single();
 
   if (submissionError || !submission) {
-    throw new Error(submissionError?.message ?? "Unable to save writing submission.");
+    throw new Error(
+      formatSupabaseError(submissionError ?? new Error("Unable to save writing submission."), {
+        operation: "create writing submission",
+        table: "public.writing_submissions",
+        env: "server",
+      }).developerMessage,
+    );
   }
 
   return {

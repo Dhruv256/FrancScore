@@ -13,6 +13,7 @@ import {
   runSafetyCheck,
 } from "@/lib/ai/nvidia-client";
 import { XP_REWARDS, applyXpAndStreak } from "@/lib/gamification/xp";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import type { SpeakingFeedback } from "@/lib/types";
@@ -109,7 +110,7 @@ export async function POST(request: Request) {
         transcript: context.transcript,
       });
 
-      await supabase
+      const { error: updateError } = await supabase
         .from("speaking_submissions")
         .update({
           review_result:
@@ -121,6 +122,16 @@ export async function POST(request: Request) {
         })
         .eq("id", context.submissionId)
         .eq("user_id", user.id);
+
+      if (updateError) {
+        throw new Error(
+          formatSupabaseError(updateError, {
+            operation: "save speaking review",
+            table: "public.speaking_submissions",
+            env: "server",
+          }).developerMessage,
+        );
+      }
 
       if (context.isNewSubmission) {
         await applyXpAndStreak(user.id, XP_REWARDS.SPEAKING_SUBMISSION, context.submittedAt);
@@ -158,7 +169,7 @@ export async function POST(request: Request) {
         transcript: context.transcript,
       });
 
-      await supabase
+      const { error: updateError } = await supabase
         .from("speaking_submissions")
         .update({
           review_result:
@@ -170,6 +181,16 @@ export async function POST(request: Request) {
         })
         .eq("id", context.submissionId)
         .eq("user_id", user.id);
+
+      if (updateError) {
+        throw new Error(
+          formatSupabaseError(updateError, {
+            operation: "save fallback speaking review",
+            table: "public.speaking_submissions",
+            env: "server",
+          }).developerMessage,
+        );
+      }
 
       if (context.isNewSubmission) {
         await applyXpAndStreak(user.id, XP_REWARDS.SPEAKING_SUBMISSION, context.submittedAt);
@@ -207,7 +228,22 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to evaluate speaking." },
+      {
+        error: formatSupabaseError(error, {
+          operation: "evaluate speaking submission",
+          table: "public.speaking_submissions",
+          env: "server",
+        }).userMessage,
+        ...(process.env.NODE_ENV === "development"
+          ? {
+              details: formatSupabaseError(error, {
+                operation: "evaluate speaking submission",
+                table: "public.speaking_submissions",
+                env: "server",
+              }).developerMessage,
+            }
+          : {}),
+      },
       { status: 500 },
     );
   }
@@ -285,7 +321,13 @@ async function resolveSpeakingContext(
     .single();
 
   if (submissionError || !submission) {
-    throw new Error(submissionError?.message ?? "Unable to save speaking submission.");
+    throw new Error(
+      formatSupabaseError(submissionError ?? new Error("Unable to save speaking submission."), {
+        operation: "create speaking submission",
+        table: "public.speaking_submissions",
+        env: "server",
+      }).developerMessage,
+    );
   }
 
   return {

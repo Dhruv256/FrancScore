@@ -6,7 +6,6 @@ import { ReadinessScoreCard } from "@/components/dashboard/ReadinessScoreCard";
 import { SkillProgressCard } from "@/components/dashboard/SkillProgressCard";
 import { WeaknessQuestCard } from "@/components/dashboard/WeaknessQuestCard";
 import { getAuthContext, getProfileDisplayName } from "@/lib/auth";
-import { mockDailyTasks, mockUser } from "@/lib/mock-data";
 import { syncUserBadges } from "@/lib/gamification/badges";
 import { getUserReadinessSnapshot } from "@/lib/gamification/readiness";
 import { getWeaknessQuest } from "@/lib/gamification/weakness";
@@ -16,7 +15,6 @@ import {
   daysUntil,
   formatExamType,
   formatGoalLevel,
-  getStreakEmoji,
 } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -41,25 +39,21 @@ export default async function DashboardPage() {
     getUserReadinessSnapshot(user.id),
     syncUserBadges(user.id),
     getWeaknessQuest(user.id),
-    getPublishedDailyTasks().catch(() => []),
+    getPublishedDailyTasks(user.id).catch(() => []),
   ]);
 
   const displayName = getProfileDisplayName(profile, user);
-  const targetExam = isTargetExam(profile?.target_exam)
-    ? profile.target_exam
-    : mockUser.targetExam;
-  const targetLevel = isGoalLevel(profile?.target_level)
-    ? profile.target_level
-    : mockUser.targetLevel;
-  const totalXp = profile?.total_xp ?? mockUser.totalXp;
-  const currentStreak = profile?.current_streak ?? mockUser.currentStreak;
+  const targetExam = isTargetExam(profile?.target_exam) ? profile.target_exam : null;
+  const targetLevel = isGoalLevel(profile?.target_level) ? profile.target_level : null;
+  const totalXp = profile?.total_xp ?? 0;
+  const currentStreak = profile?.current_streak ?? 0;
   const level = calculateLevel(totalXp);
   const daysLeft = profile?.exam_date ? daysUntil(new Date(profile.exam_date)) : null;
   const earnedBadgesCount = badges.filter((badge) => Boolean(badge.earnedAt)).length;
 
   return (
     <div className="space-y-7">
-      <section className="surface-panel overflow-hidden rounded-[2rem] p-5 sm:p-7">
+      <section className="card-soft overflow-hidden rounded-[2rem] p-5 sm:p-7">
         <div className="absolute inset-x-0 top-0 h-px gradient-green" />
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -71,27 +65,36 @@ export default async function DashboardPage() {
               Bonjour, {displayName.split(" ")[0]}.
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-6 text-text-secondary">
-              <span className="badge badge-green mr-2">
-                {formatExamType(targetExam)}
-              </span>
-              Targeting{" "}
-              <span className="font-bold text-text-primary">
-                {formatGoalLevel(targetLevel)}
-              </span>{" "}
-              with daily repair missions.
+              {targetExam ? (
+                <span className="badge badge-green mr-2">
+                  {formatExamType(targetExam)}
+                </span>
+              ) : null}
+              {targetExam && targetLevel ? (
+                <>
+                  Targeting{" "}
+                  <span className="font-bold text-text-primary">
+                    {formatGoalLevel(targetLevel)}
+                  </span>{" "}
+                  with live repair missions.
+                </>
+              ) : (
+                "Complete onboarding to lock your target exam, level, and daily study rhythm."
+              )}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:min-w-[430px]">
-            <div className="rounded-3xl border border-white/10 bg-white/[0.055] p-4">
+            <div className="rounded-3xl border border-[rgba(17,17,17,0.08)] bg-[#fffaf0]/80 p-4 shadow-[0_16px_40px_rgba(17,17,17,0.06)]">
               <div className="text-xs font-bold text-text-muted">Streak</div>
-              <div className="mt-2 text-2xl font-black">
-                {getStreakEmoji(currentStreak)} {currentStreak}
+              <div className="mt-2 flex items-center gap-2 text-2xl font-black">
+                <Flame className="h-5 w-5 text-brand-green" />
+                {currentStreak}
               </div>
               <div className="text-[11px] text-text-muted">days active</div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/[0.055] p-4">
+            <div className="rounded-3xl border border-[rgba(17,17,17,0.08)] bg-[#fffaf0]/80 p-4 shadow-[0_16px_40px_rgba(17,17,17,0.06)]">
               <div className="flex items-center gap-1 text-xs font-bold text-text-muted">
                 <Zap className="h-3 w-3 text-brand-green" />
                 XP
@@ -103,7 +106,7 @@ export default async function DashboardPage() {
             </div>
 
             {daysLeft !== null ? (
-              <div className="col-span-2 rounded-3xl border border-white/10 bg-white/[0.055] p-4 sm:col-span-1">
+              <div className="col-span-2 rounded-3xl border border-[rgba(17,17,17,0.08)] bg-[#fffaf0]/80 p-4 shadow-[0_16px_40px_rgba(17,17,17,0.06)] sm:col-span-1">
                 <div className="flex items-center gap-1 text-xs font-bold text-text-muted">
                   <Calendar className="h-3 w-3 text-accent-amber" />
                   Exam
@@ -143,9 +146,18 @@ export default async function DashboardPage() {
             </a>
           </div>
           <div className="space-y-2">
-            {(dailyTasks.length ? dailyTasks : mockDailyTasks).map((task, index) => (
-              <DailyTaskCard key={task.id} task={task} index={index} />
-            ))}
+            {dailyTasks.length ? (
+              dailyTasks.map((task, index) => (
+                <DailyTaskCard key={task.id} task={task} index={index} />
+              ))
+            ) : (
+              <EmptyDashboardCard
+                title="No live daily tasks yet"
+                description="Seed FrancScore learning data or publish tasks from the admin CMS to populate War Mode with real missions."
+                href="/admin"
+                cta="Open admin CMS"
+              />
+            )}
           </div>
         </div>
 
@@ -176,10 +188,34 @@ export default async function DashboardPage() {
   );
 }
 
-function isTargetExam(value: string | null | undefined): value is typeof mockUser.targetExam {
+function isTargetExam(value: string | null | undefined): value is "TEF_CANADA" | "TCF_CANADA" | "MIXED" {
   return value === "TEF_CANADA" || value === "TCF_CANADA" || value === "MIXED";
 }
 
-function isGoalLevel(value: string | null | undefined): value is typeof mockUser.targetLevel {
+function isGoalLevel(value: string | null | undefined): value is "B2" | "CLB_7" | "CLB_8" {
   return value === "B2" || value === "CLB_7" || value === "CLB_8";
+}
+
+function EmptyDashboardCard({
+  title,
+  description,
+  href,
+  cta,
+}: {
+  title: string;
+  description: string;
+  href: string;
+  cta: string;
+}) {
+  return (
+    <div className="rounded-[1.75rem] border border-[rgba(244,238,221,0.16)] bg-[linear-gradient(145deg,rgba(244,238,221,0.16),rgba(244,238,221,0.05))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+      <p className="page-kicker mb-3">Live data required</p>
+      <h3 className="text-lg font-black text-text-primary">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-text-secondary">{description}</p>
+      <a href={href} className="btn btn-secondary mt-4">
+        {cta}
+        <ArrowRight className="h-4 w-4" />
+      </a>
+    </div>
+  );
 }

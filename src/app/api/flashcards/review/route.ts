@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/auth";
+import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { reviewFlashcard } from "@/lib/flashcards/server";
 import type { FlashcardReviewPayload } from "@/lib/flashcards/types";
 
@@ -40,10 +41,17 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
+    const formatted = formatSupabaseError(error, {
+      operation: "save flashcard review",
+      table: "public.flashcard_reviews",
+      env: "server",
+    });
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Unable to save flashcard review.",
+        error: formatted.userMessage,
+        ...(process.env.NODE_ENV === "development"
+          ? { details: formatted.developerMessage }
+          : {}),
       },
       { status: 500 },
     );

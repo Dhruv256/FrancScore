@@ -61,11 +61,15 @@ export async function getPracticeQuestionSet(
   );
   const progress = await getPracticeProgress(filters.skill, userId);
 
+  const items = questions
+    .map((question) =>
+      sanitizeQuestion(question, question.passage_id ? passages.get(question.passage_id) ?? null : null),
+    )
+    .sort((left, right) => comparePracticeQuestions(left, right, filters.skill));
+
   return {
     filters,
-    items: questions.map((question) =>
-      sanitizeQuestion(question, question.passage_id ? passages.get(question.passage_id) ?? null : null),
-    ),
+    items,
     progress,
   };
 }
@@ -121,9 +125,30 @@ export async function submitPracticeAttempt(
     isCorrect,
     explanation: question.explanation,
     trapType: normalizeTrapType(question.trap_type),
-    transcript: question.transcript,
+    transcript: await resolveAttemptTranscript(question),
     progress,
   };
+}
+
+async function resolveAttemptTranscript(
+  question: Pick<QuestionRow, "transcript" | "passage_id">,
+) {
+  if (question.transcript || !question.passage_id) {
+    return question.transcript;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("passages")
+    .select("transcript")
+    .eq("id", question.passage_id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data?.transcript ?? null;
 }
 
 async function getPassagesByIds(passageIds: string[]) {
@@ -148,7 +173,10 @@ async function getPassagesByIds(passageIds: string[]) {
       {
         id: passage.id,
         title: passage.title,
-        content: passage.content,
+        content: passage.content ?? passage.transcript ?? "",
+        transcript: passage.transcript,
+        audioUrl: passage.audio_url,
+        type: passage.type,
         highlightedVocabulary: passage.highlighted_vocabulary ?? [],
         wordCount: passage.word_count,
         estimatedMinutes: passage.estimated_minutes,
@@ -240,8 +268,8 @@ function sanitizeQuestion(
     options: Array.isArray(question.options) ? question.options.filter(isString) : [],
     trapType: normalizeTrapType(question.trap_type),
     tags: question.tags ?? [],
-    audioUrl: question.audio_url,
-    hasTranscript: Boolean(question.transcript),
+    audioUrl: question.audio_url ?? passage?.audioUrl ?? null,
+    hasTranscript: Boolean(question.transcript ?? passage?.transcript),
     passageId: question.passage_id,
     passage,
   };
@@ -290,6 +318,7 @@ function isSubmissionQuestionRow(
 ): question is Pick<
   QuestionRow,
   "id" | "correct_answer_index" | "explanation" | "trap_type" | "transcript" | "skill_type"
+  | "passage_id"
 > {
   return (
     typeof question.id === "string" &&
@@ -300,4 +329,20 @@ function isSubmissionQuestionRow(
 
 function isString(value: Json): value is string {
   return typeof value === "string";
+}
+
+function comparePracticeQuestions(
+  left: PracticeQuestion,
+  right: PracticeQuestion,
+  skill: PracticeSkill,
+) {
+  if (skill === "LISTENING") {
+    const leftAudio = left.audioUrl ? 1 : 0;
+    const rightAudio = right.audioUrl ? 1 : 0;
+    if (leftAudio !== rightAudio) {
+      return rightAudio - leftAudio;
+    }
+  }
+
+  return left.id.localeCompare(right.id);
 }

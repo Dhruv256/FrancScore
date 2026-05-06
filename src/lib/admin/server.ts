@@ -94,6 +94,13 @@ export async function listAdminResource(resource: AdminResource, filters?: Recor
         section_count: Array.isArray(row.mock_test_sections) ? row.mock_test_sections.length : 0,
       }));
     }
+    case "missions": {
+      let query = supabase.from("daily_tasks").select("*").order("created_at", { ascending: false });
+      query = applyStandardFilters(query, filters);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    }
   }
 }
 

@@ -229,7 +229,7 @@ export function AdminResourcePageClient({ resource, initialRecords }: Props) {
               <label className="text-xs text-text-muted mb-2 block">Upload Audio</label>
               <label className="btn btn-secondary btn-sm inline-flex cursor-pointer">
                 <Upload className="w-4 h-4" />
-                {audioUploading ? "Uploading..." : "Upload to listening-audio"}
+                {audioUploading ? "Uploading..." : "Upload audio"}
                 <input
                   type="file"
                   accept="audio/*"
