@@ -58,7 +58,7 @@ export function isNvidiaEnabled() {
 
 export function isNvidiaPurposeEnabled(purpose: NvidiaModelPurpose) {
   const env = getServerEnv();
-  return isFeatureEnabledForPurpose(env, purpose) && Boolean(getApiKeyForPurpose(env, purpose));
+  return isFeatureEnabledForPurpose(env, purpose);
 }
 
 export function getConfiguredModelId(purpose: NvidiaModelPurpose): NvidiaModelId {

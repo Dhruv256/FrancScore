@@ -71,49 +71,6 @@ const serverEnvSchema = z
     AWS_SECRET_ACCESS_KEY: optionalStringSchema,
     AWS_REGION: z.string().optional(),
     FRANCSCORE_E2E_TEST_MODE: optionalBooleanFlagSchema,
-  })
-  .superRefine((env, context) => {
-    const mainAiEnabled =
-      env.AI_ENABLE_WRITING_EVALUATION ||
-      env.AI_ENABLE_SPEAKING_EVALUATION ||
-      env.AI_ENABLE_STUDY_PLAN ||
-      env.AI_ENABLE_ADMIN_GENERATION;
-
-    if (mainAiEnabled && !env.NVIDIA_MAIN_API_KEY && !env.NVIDIA_API_KEY) {
-      context.addIssue({
-        code: "custom",
-        path: ["NVIDIA_MAIN_API_KEY"],
-        message:
-          "NVIDIA_MAIN_API_KEY or NVIDIA_API_KEY is required when main AI features are enabled.",
-      });
-    }
-
-    if (env.AI_ENABLE_RERANKING && !env.NVIDIA_RERANK_API_KEY && !env.NVIDIA_API_KEY) {
-      context.addIssue({
-        code: "custom",
-        path: ["NVIDIA_RERANK_API_KEY"],
-        message:
-          "NVIDIA_RERANK_API_KEY or NVIDIA_API_KEY is required when AI_ENABLE_RERANKING is enabled.",
-      });
-    }
-
-    if (env.AI_ENABLE_SAFETY_CHECK && !env.NVIDIA_SAFETY_API_KEY && !env.NVIDIA_API_KEY) {
-      context.addIssue({
-        code: "custom",
-        path: ["NVIDIA_SAFETY_API_KEY"],
-        message:
-          "NVIDIA_SAFETY_API_KEY or NVIDIA_API_KEY is required when AI_ENABLE_SAFETY_CHECK is enabled.",
-      });
-    }
-
-    if (env.AI_ENABLE_STT && !env.NVIDIA_STT_API_KEY && !env.NVIDIA_API_KEY) {
-      context.addIssue({
-        code: "custom",
-        path: ["NVIDIA_STT_API_KEY"],
-        message:
-          "NVIDIA_STT_API_KEY or NVIDIA_API_KEY is required when AI_ENABLE_STT is enabled.",
-      });
-    }
   });
 
 const databaseEnvSchema = z.object({
