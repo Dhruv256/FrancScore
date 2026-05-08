@@ -141,6 +141,36 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["daily_tasks"]["Insert"]>;
         Relationships: [];
       };
+      daily_vocab_generations: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          error_message: string | null;
+          failed_count: number;
+          generation_date: string;
+          id: string;
+          inserted_count: number;
+          model_used: string | null;
+          requested_count: number;
+          skipped_duplicate_count: number;
+          status: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          error_message?: string | null;
+          failed_count?: number;
+          generation_date: string;
+          id?: string;
+          inserted_count?: number;
+          model_used?: string | null;
+          requested_count?: number;
+          skipped_duplicate_count?: number;
+          status?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["daily_vocab_generations"]["Insert"]>;
+        Relationships: [];
+      };
       flashcard_reviews: {
         Row: {
           id: string;

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowRight, Layers, Library, Search } from "lucide-react";
+import { ArrowRight, Layers, Library, Search, Sparkles } from "lucide-react";
+import { GenerateDailyVocabButton } from "@/components/admin/GenerateDailyVocabButton";
 import { CEFR_LEVELS, VOCAB_TOPICS } from "@/lib/constants";
 import type { CEFRLevel, TopicType, VocabStatus, VocabularyWord } from "@/lib/types";
 import { formatCEFRLevel, formatTopicType, formatVocabularyStatus } from "@/lib/utils";
@@ -14,7 +15,13 @@ const statusColors: Record<VocabStatus, { bg: string; text: string }> = {
   MASTERED: { bg: "bg-status-success/10", text: "text-status-success" },
 };
 
-export function VocabularyBankClient({ words }: { words: VocabularyWord[] }) {
+export function VocabularyBankClient({
+  words,
+  isAdmin = false,
+}: {
+  words: VocabularyWord[];
+  isAdmin?: boolean;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<VocabStatus | "ALL">("ALL");
   const [levelFilter, setLevelFilter] = useState<CEFRLevel | "ALL">("ALL");
@@ -74,6 +81,16 @@ export function VocabularyBankClient({ words }: { words: VocabularyWord[] }) {
           </Link>
         </div>
       </div>
+
+      {isAdmin ? (
+        <div className="rounded-[2rem] border border-[rgba(17,17,17,0.08)] bg-[#fff8ed]/80 p-1">
+          <GenerateDailyVocabButton />
+          <p className="px-5 pb-4 pt-1 text-xs text-text-muted">
+            <Sparkles className="mr-1 inline h-3.5 w-3.5 text-brand-green" />
+            Admin-only CTA. Generated rows are published only after validation and duplicate checks.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="New" value={stats.newCount} valueClassName="text-accent-blue" />

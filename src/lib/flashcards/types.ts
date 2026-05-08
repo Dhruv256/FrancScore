@@ -56,7 +56,8 @@ export type FlashcardSessionResponse = {
 export type FlashcardReviewAction =
   | "RATE"
   | "MARK_MASTERED"
-  | "SAVE_WEAK";
+  | "SAVE_WEAK"
+  | "SKIP";
 
 export type FlashcardReviewPayload = {
   sessionId: string;

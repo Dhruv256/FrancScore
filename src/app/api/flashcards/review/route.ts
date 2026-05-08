@@ -25,7 +25,8 @@ export async function POST(request: Request) {
     !(
       body.action === "RATE" ||
       body.action === "MARK_MASTERED" ||
-      body.action === "SAVE_WEAK"
+      body.action === "SAVE_WEAK" ||
+      body.action === "SKIP"
     )
   ) {
     return NextResponse.json({ error: "Invalid flashcard review payload." }, { status: 400 });

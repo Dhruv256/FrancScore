@@ -1,31 +1,25 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = [
-  "/",
-  "/login",
-  "/signup",
-  "/auth",
-  "/api",
-  "/_next",
-  "/favicon.ico",
-];
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isPublicPath = PUBLIC_PATHS.some((path) =>
-    pathname === path || pathname.startsWith(`${path}/`)
-  );
-
-  if (isPublicPath) {
+  // Allow Next internals and static files
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/robots.txt") ||
+    pathname.startsWith("/sitemap.xml") ||
+    pathname.startsWith("/manifest.webmanifest") ||
+    pathname.startsWith("/icons")
+  ) {
     return NextResponse.next();
   }
 
-  // For now, do not do Supabase session validation in middleware.
-  // Auth protection should happen inside server components/layouts or route handlers.
+  // Do not run Supabase/auth/env/AI logic in middleware.
+  // Auth protection will be handled in route layouts/pages instead.
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest).*)"],
 };

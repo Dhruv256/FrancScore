@@ -131,10 +131,11 @@ export async function reviewFlashcard(
   const previousStatus = normalizeVocabularyStatus(existingRow?.status) ?? "NEW";
   const nextState = computeNextReviewState(existingRow, payload.rating, payload.action);
   const xpEarned =
-    XP_REWARDS.FLASHCARD_REVIEW +
-    (nextState.status === "MASTERED" && previousStatus !== "MASTERED"
-      ? XP_REWARDS.FLASHCARD_MASTERED_BONUS
-      : 0);
+    payload.action === "SKIP"
+      ? 0
+      : payload.action === "MARK_MASTERED"
+        ? XP_REWARDS.FLASHCARD_REVIEW + XP_REWARDS.FLASHCARD_MASTERED_BONUS
+        : XP_REWARDS.FLASHCARD_REVIEW;
   const nowIso = new Date().toISOString();
 
   const upsertPayload: Database["public"]["Tables"]["user_word_bank"]["Insert"] = {
@@ -176,8 +177,16 @@ export async function reviewFlashcard(
     throw new Error(reviewError.message);
   }
 
-  await applyXpAndStreak(userId, xpEarned, nowIso);
-  await updateSessionStats(payload.sessionId, xpEarned, nextState.status, previousStatus);
+  if (xpEarned > 0) {
+    await applyXpAndStreak(userId, xpEarned, nowIso);
+  }
+  await updateSessionStats(
+    payload.sessionId,
+    xpEarned,
+    nextState.status,
+    previousStatus,
+    payload.action === "SKIP",
+  );
 
   return {
     vocabularyId: payload.vocabularyId,
@@ -195,6 +204,7 @@ async function updateSessionStats(
   xpEarned: number,
   nextStatus: VocabularyStatus,
   previousStatus: VocabularyStatus,
+  isSkipped = false,
 ) {
   const supabase = await createClient();
   const { data: session, error } = await supabase
@@ -214,7 +224,7 @@ async function updateSessionStats(
   const { error: updateError } = await supabase
     .from("flashcard_sessions")
     .update({
-      cards_reviewed: session.cards_reviewed + 1,
+      cards_reviewed: session.cards_reviewed + (isSkipped ? 0 : 1),
       mastered_count: session.mastered_count + masteredIncrement,
       weak_count: session.weak_count + weakIncrement,
       xp_earned: session.xp_earned + xpEarned,
@@ -343,6 +353,18 @@ function computeNextReviewState(
   action: FlashcardReviewPayload["action"],
 ) {
   const previousStatus = normalizeVocabularyStatus(row?.status) ?? "NEW";
+
+  if (action === "SKIP") {
+    return {
+      status: previousStatus,
+      nextReviewAt: new Date(Date.now() + 60 * 24 * 60 * 1000).toISOString(),
+      correctCount: row?.correct_count ?? 0,
+      mistakeCount: row?.mistake_count ?? 0,
+      reviewCount: row?.review_count ?? 0,
+      easeScore: row?.ease_score ?? 2.5,
+    };
+  }
+
   const reviewCount = (row?.review_count ?? 0) + 1;
   const correctCount =
     (row?.correct_count ?? 0) + (rating === "AGAIN" || action === "SAVE_WEAK" ? 0 : 1);
@@ -355,7 +377,7 @@ function computeNextReviewState(
   switch (action) {
     case "MARK_MASTERED":
       status = "MASTERED";
-      minutes = 60 * 24 * 14;
+      minutes = 60 * 24 * 7;
       easeScore = Math.min(4.5, easeScore + 0.4);
       break;
     case "SAVE_WEAK":

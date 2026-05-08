@@ -47,18 +47,12 @@ import {
   formatCEFRLevel,
   formatExamType,
   formatTopicType,
-  formatVocabularyStatus,
 } from "@/lib/utils";
+import { FlashcardDeck } from "@/components/vocabulary/FlashcardDeck";
+import type { SwipeReviewMapping } from "@/lib/vocabulary/review";
 
 type FlashcardsPageClientProps = {
   defaultExamType: ExamType | "ALL";
-};
-
-const statusColors: Record<VocabularyStatus, { bg: string; text: string }> = {
-  NEW: { bg: "bg-accent-blue/10", text: "text-accent-blue" },
-  LEARNING: { bg: "bg-accent-amber/10", text: "text-accent-amber" },
-  WEAK: { bg: "bg-accent-rose/10", text: "text-accent-rose" },
-  MASTERED: { bg: "bg-status-success/10", text: "text-status-success" },
 };
 
 const deckModeIcons: Record<FlashcardDeckType, ComponentType<{ className?: string }>> = {
@@ -92,6 +86,12 @@ export function FlashcardsPageClient({
   const [session, setSession] = useState<FlashcardSession | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isReviewing, setIsReviewing] = useState(false);
+  const [undoSnapshot, setUndoSnapshot] = useState<{
+    cards: FlashcardCard[];
+    session: FlashcardSession;
+    currentIndex: number;
+    isFlipped: boolean;
+  } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -242,6 +242,12 @@ export function FlashcardsPageClient({
 
     setIsReviewing(true);
     setErrorMessage(null);
+    setUndoSnapshot({
+      cards,
+      session,
+      currentIndex,
+      isFlipped,
+    });
 
     try {
       const response = await fetch("/api/flashcards/review", {
@@ -269,10 +275,11 @@ export function FlashcardsPageClient({
 
       const previousStatus = currentCard.status;
       const nextStatus = payload.status;
+      const isSkip = action === "SKIP";
       const masteredIncrement =
-        nextStatus === "MASTERED" && previousStatus !== "MASTERED" ? 1 : 0;
+        !isSkip && nextStatus === "MASTERED" && previousStatus !== "MASTERED" ? 1 : 0;
       const weakIncrement =
-        nextStatus === "WEAK" && previousStatus !== "WEAK" ? 1 : 0;
+        !isSkip && nextStatus === "WEAK" && previousStatus !== "WEAK" ? 1 : 0;
 
       setCards((previousCards) =>
         previousCards.map((card) =>
@@ -299,7 +306,7 @@ export function FlashcardsPageClient({
 
         return {
           ...previousSession,
-          reviewed: previousSession.reviewed + 1,
+          reviewed: previousSession.reviewed + (isSkip ? 0 : 1),
           mastered: previousSession.mastered + masteredIncrement,
           weakAdded: previousSession.weakAdded + weakIncrement,
           xpEarned: previousSession.xpEarned + payload.xpEarned,
@@ -335,6 +342,7 @@ export function FlashcardsPageClient({
         });
       }
     } catch (error) {
+      setUndoSnapshot(null);
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to save flashcard review.",
       );
@@ -349,6 +357,29 @@ export function FlashcardsPageClient({
     setCurrentIndex(0);
     setIsFlipped(false);
     setSession(null);
+    setUndoSnapshot(null);
+  };
+
+  const undoLastAction = () => {
+    if (!undoSnapshot || isReviewing) {
+      return;
+    }
+
+    setCards(undoSnapshot.cards);
+    setSession(undoSnapshot.session);
+    setCurrentIndex(undoSnapshot.currentIndex);
+    setIsFlipped(undoSnapshot.isFlipped);
+    setSessionComplete(false);
+    setUndoSnapshot(null);
+  };
+
+  const handleSwipeReview = (mapping: SwipeReviewMapping) => {
+    if (!isFlipped) {
+      setIsFlipped(true);
+      return;
+    }
+
+    void handleReview(mapping.rating, mapping.action);
   };
 
   useEffect(() => {
@@ -655,8 +686,6 @@ export function FlashcardsPageClient({
     return null;
   }
 
-  const currentStatusColor = statusColors[currentCard.status];
-
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-3">
@@ -673,6 +702,15 @@ export function FlashcardsPageClient({
             <Zap className="w-3 h-3" />
             {session.xpEarned} XP
           </span>
+          <button
+            type="button"
+            onClick={undoLastAction}
+            disabled={!undoSnapshot || isReviewing}
+            className="btn btn-ghost btn-sm"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Undo
+          </button>
         </div>
       </div>
 
@@ -690,84 +728,13 @@ export function FlashcardsPageClient({
         />
       </div>
 
-      <button
-        type="button"
-        className="flashcard-container cursor-pointer text-left w-full"
-        onClick={() => setIsFlipped((current) => !current)}
-        style={{ minHeight: "430px" }}
-      >
-        <div
-          className={`flashcard-inner ${isFlipped ? "flipped" : ""}`}
-          style={{ minHeight: "430px" }}
-        >
-          <div
-            className="flashcard-front card-dark-premium p-8 flex flex-col items-center justify-center text-center"
-            style={{ minHeight: "430px" }}
-          >
-            <div className="flex items-center gap-2 mb-6 flex-wrap justify-center">
-              <span className="badge badge-blue">{formatCEFRLevel(currentCard.cefrLevel)}</span>
-              {currentCard.topic ? (
-                <span className="badge badge-purple">{formatTopicType(currentCard.topic)}</span>
-              ) : null}
-              <span className={`badge ${currentStatusColor.bg} ${currentStatusColor.text} border-none`}>
-                {formatVocabularyStatus(currentCard.status)}
-              </span>
-            </div>
-            <h2 className="display-title text-6xl sm:text-7xl mb-5 text-text-inverse break-words">
-              {currentCard.frenchWord}
-            </h2>
-            <p className="text-sm font-bold text-text-muted">Tap the card or press Space to flip</p>
-          </div>
-
-          <div className="flashcard-back card-soft p-6 sm:p-8" style={{ minHeight: "430px" }}>
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <span className="badge badge-blue">{formatCEFRLevel(currentCard.cefrLevel)}</span>
-              {currentCard.topic ? (
-                <span className="badge badge-purple">{formatTopicType(currentCard.topic)}</span>
-              ) : null}
-              <span className={`badge ${currentStatusColor.bg} ${currentStatusColor.text} border-none`}>
-                {formatVocabularyStatus(currentCard.status)}
-              </span>
-              <span className="badge badge-green">{formatCardExamType(currentCard.examType)}</span>
-            </div>
-
-            <h3 className="text-4xl font-black mb-4">{currentCard.frenchWord}</h3>
-
-            <div className="mb-5">
-              <span className="text-xs text-text-muted uppercase tracking-wider">Meaning</span>
-              <p className="text-2xl text-brand-green font-black">{currentCard.englishMeaning}</p>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-[#fffaf0]/80 border border-[rgba(17,17,17,0.08)] space-y-3">
-              {currentCard.frenchExample ? (
-                <p className="text-sm text-text-secondary">
-                  <span className="text-xs text-brand-green font-medium mr-2">FR:</span>
-                  {currentCard.frenchExample}
-                </p>
-              ) : (
-                <p className="text-sm text-text-muted">No French example yet.</p>
-              )}
-
-              {currentCard.englishExampleTranslation ? (
-                <p className="text-sm text-text-muted">
-                  <span className="text-xs text-accent-blue font-medium mr-2">EN:</span>
-                  {currentCard.englishExampleTranslation}
-                </p>
-              ) : (
-                <p className="text-sm text-text-muted">No English translation yet.</p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2 mt-4">
-              {currentCard.tags.map((tag) => (
-                <span key={tag} className="badge badge-purple text-[10px]">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </button>
+      <FlashcardDeck
+        card={currentCard}
+        isFlipped={isFlipped}
+        disabled={isReviewing}
+        onFlip={() => setIsFlipped((current) => !current)}
+        onSwipe={handleSwipeReview}
+      />
 
       {isFlipped ? (
         <div className="space-y-3 animate-fade-in-up">
@@ -814,7 +781,7 @@ export function FlashcardsPageClient({
               className="btn btn-ghost btn-sm text-status-success"
             >
               <Check className="w-3.5 h-3.5" />
-              Mark as Mastered (+10 XP bonus)
+              Mark as Mastered (+15 XP)
             </button>
             <button
               type="button"
@@ -895,16 +862,4 @@ function ReviewButton({
       <span className="text-[10px] opacity-60 mt-0.5">{shortcut}</span>
     </button>
   );
-}
-
-function formatCardExamType(examType: string) {
-  if (examType === "BOTH") {
-    return "Both";
-  }
-
-  if (examType === "TEF_CANADA" || examType === "TCF_CANADA" || examType === "MIXED") {
-    return formatExamType(examType);
-  }
-
-  return examType;
 }
