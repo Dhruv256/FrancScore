@@ -559,7 +559,9 @@ export interface Database {
           french_word: string;
           frequency_score: number;
           id: string;
+          import_confidence: number | null;
           is_published: boolean;
+          source_import_id: string | null;
           tags: string[] | null;
           topic: string | null;
           updated_at: string;
@@ -575,7 +577,9 @@ export interface Database {
           french_word: string;
           frequency_score?: number;
           id?: string;
+          import_confidence?: number | null;
           is_published?: boolean;
+          source_import_id?: string | null;
           tags?: string[] | null;
           topic?: string | null;
           updated_at?: string;

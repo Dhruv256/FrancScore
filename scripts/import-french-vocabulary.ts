@@ -1,26 +1,23 @@
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { basename, resolve } from "node:path";
 import WebSocket from "ws";
 import * as XLSX from "xlsx";
+import { cleanupVocabularyRowsWithAI, type CleanedImportItem } from "../src/lib/ai/import-cleanup.ts";
+import {
+  classifyVocabularyRow,
+  createFallbackExample,
+  normalizeVocabularyKey,
+  type ClassifiedVocabularyRow,
+  type RawVocabularyImportRow,
+} from "../src/lib/import/classify-vocab-row.ts";
 
-type VocabularyImportRow = {
-  french_word: string;
-  english_meaning: string;
-  french_example: string | null;
-  english_example_translation: string | null;
-  cefr_level: string;
-  topic: string;
-  exam_type: string;
-  frequency_score: number;
-  tags: string[];
-  is_published: boolean;
-};
+type ImportAction = "imported" | "skipped" | "concept_created" | "duplicate" | "needs_review";
 
-const workbookPath =
-  process.argv.find((arg) => arg.startsWith("--file="))?.slice("--file=".length) ??
-  resolve(process.cwd(), "..", "French_schedule.xlsx");
-const dryRun = process.argv.includes("--dry-run");
+const args = parseArgs(process.argv.slice(2));
+const workbookPath = String(args.file ?? resolve(process.cwd(), "..", "French_schedule.xlsx"));
+const dryRun = Boolean(args["dry-run"] ?? args.preview);
+const useAi = !args["no-ai"];
 
 loadEnvFile(".env.local");
 
@@ -30,66 +27,121 @@ main().catch((error) => {
 });
 
 async function main() {
+  if (!existsSync(workbookPath)) {
+    throw new Error(`Excel file not found: ${workbookPath}`);
+  }
+
   const workbook = XLSX.readFile(workbookPath, { cellDates: false });
-  const parsedRows = parseWorkbook(workbook);
-  const uniqueRows = dedupeRows(parsedRows.rows);
+  const rawRows = parseWorkbook(workbook);
+  let classifiedRows = rawRows.map(classifyVocabularyRow);
+  let aiCleanedCount = 0;
 
-  const report = {
-    workbookPath,
-    sheetsDetected: workbook.SheetNames,
-    parsedRows: parsedRows.rows.length,
-    skippedRows: parsedRows.skipped,
-    uniqueRows: uniqueRows.length,
-    insertedRows: 0,
-    existingRowsSkipped: 0,
-    dryRun,
-  };
-
-  if (!dryRun) {
-    const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
-    const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-    const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-      realtime: { transport: WebSocket },
-    });
-
-    const { data: existing, error: existingError } = await supabase
-      .from("vocabulary")
-      .select("french_word,english_meaning");
-
-    if (existingError) {
-      throw new Error(`Unable to inspect existing vocabulary: ${existingError.message}`);
-    }
-
-    const existingKeys = new Set(
-      (existing ?? []).map((row) => buildDedupeKey(row.french_word, row.english_meaning)),
+  if (useAi) {
+    const aiCandidates = classifiedRows.filter(
+      (row) => row.needsAiCleanup || row.detectedType === "uncertain",
     );
-    const rowsToInsert = uniqueRows.filter((row) => {
-      const key = buildDedupeKey(row.french_word, row.english_meaning);
-      if (existingKeys.has(key)) {
-        return false;
-      }
-      existingKeys.add(key);
-      return true;
-    });
-
-    report.existingRowsSkipped = uniqueRows.length - rowsToInsert.length;
-
-    for (const batch of chunk(rowsToInsert, 200)) {
-      const { error } = await supabase.from("vocabulary").insert(batch);
-      if (error) {
-        throw new Error(`Vocabulary import failed: ${error.message}`);
-      }
-      report.insertedRows += batch.length;
+    try {
+      const cleanedItems = await cleanupVocabularyRowsWithAI(aiCandidates.slice(0, 80));
+      aiCleanedCount = cleanedItems.length;
+      classifiedRows = mergeAiCleanup(classifiedRows, cleanedItems);
+    } catch (error) {
+      console.warn(
+        `AI cleanup unavailable; using deterministic cleanup only. ${
+          error instanceof Error ? error.message : "Unknown AI error"
+        }`,
+      );
     }
   }
 
-  console.log(JSON.stringify(report, null, 2));
+  classifiedRows = classifiedRows.map((row) => {
+    if (!row.shouldImportAsFlashcard || (row.frenchExample && row.englishExampleTranslation)) {
+      return row;
+    }
+    const example = createFallbackExample(row);
+    return {
+      ...row,
+      frenchExample: example.frenchExample,
+      englishExampleTranslation: example.englishExampleTranslation,
+      reason: `${row.reason} Example generated deterministically.`,
+    };
+  });
+
+  const report = createBaseReport(workbook, rawRows, classifiedRows, aiCleanedCount);
+
+  if (dryRun) {
+    console.log(JSON.stringify(report, null, 2));
+    return;
+  }
+
+  const supabase = createClient(
+    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    {
+      auth: { persistSession: false, autoRefreshToken: false },
+      realtime: { transport: WebSocket },
+    },
+  );
+
+  const { data: batch, error: batchError } = await supabase
+    .from("vocabulary_import_batches")
+    .insert({
+      file_name: basename(workbookPath),
+      total_rows: rawRows.length,
+      status: "processing",
+    })
+    .select("*")
+    .single();
+
+  if (batchError || !batch) {
+    throw new Error(`Unable to create import batch. Apply migration first. ${batchError?.message ?? ""}`);
+  }
+
+  try {
+    const existingKeys = await loadExistingVocabularyKeys(supabase);
+    const rowLogs = [];
+
+    for (const row of classifiedRows) {
+      const action = await processRow(supabase, row, batch.id, existingKeys);
+      rowLogs.push(toRowLog(batch.id, row, action.action, action.reason));
+      report[action.reportKey] += 1;
+    }
+
+    for (const batchRows of chunk(rowLogs, 200)) {
+      const { error } = await supabase.from("vocabulary_import_rows").insert(batchRows);
+      if (error) throw new Error(`Unable to write import row audit log: ${error.message}`);
+    }
+
+    const { error: updateError } = await supabase
+      .from("vocabulary_import_batches")
+      .update({
+        imported_count: report.imported_count,
+        skipped_count: report.skipped_count,
+        concept_count: report.concept_count,
+        duplicate_count: report.duplicate_count,
+        ai_cleaned_count: report.ai_cleaned_count,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", batch.id);
+
+    if (updateError) throw new Error(`Unable to finalize import batch: ${updateError.message}`);
+    console.log(JSON.stringify({ ...report, batchId: batch.id }, null, 2));
+  } catch (error) {
+    await supabase
+      .from("vocabulary_import_batches")
+      .update({
+        status: "failed",
+        error_message: error instanceof Error ? error.message : "Unknown import error",
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", batch.id);
+    throw error;
+  }
 }
 
-function parseWorkbook(workbookFile: XLSX.WorkBook) {
-  const rows: VocabularyImportRow[] = [];
-  let skipped = 0;
+function parseWorkbook(workbookFile: XLSX.WorkBook): RawVocabularyImportRow[] {
+  const rows: RawVocabularyImportRow[] = [];
+  let rowNumber = 1;
 
   for (const sheetName of workbookFile.SheetNames) {
     const worksheet = workbookFile.Sheets[sheetName];
@@ -99,115 +151,44 @@ function parseWorkbook(workbookFile: XLSX.WorkBook) {
       defval: "",
     });
     const headers = findHeaderRow(matrix);
-    const inferredTopic = inferTopic(sheetName);
 
-    if (headers) {
-      for (const row of matrix.slice(headers.index + 1)) {
-        const parsed = parseObjectRow(row, headers.names, inferredTopic);
-        if (parsed) rows.push(parsed);
-        else skipped += 1;
-      }
-      continue;
-    }
+    for (const [index, row] of matrix.entries()) {
+      const rawCells = row.map((cell) => String(cell ?? "").trim());
+      if (!rawCells.some(Boolean)) continue;
+      if (headers && index <= headers.index) continue;
 
-    for (const row of matrix) {
-      const line = row.map((cell) => String(cell ?? "").trim()).filter(Boolean).join(" ");
-      const parsed = parseLineRow(line, inferredTopic);
-      if (parsed) rows.push(parsed);
-      else skipped += line ? 1 : 0;
+      const rawJson = headers
+        ? Object.fromEntries(headers.names.map((header, cellIndex) => [header, rawCells[cellIndex] ?? ""]))
+        : Object.fromEntries(rawCells.map((cell, cellIndex) => [`col_${cellIndex + 1}`, cell]));
+
+      rows.push({
+        rowNumber,
+        sheetName,
+        frenchWord: pickValue(rawJson, ["french_word", "french", "word", "mot", "vocabulary", "vocab"]) ?? rawCells[0],
+        englishMeaning: pickValue(rawJson, ["english_meaning", "english", "meaning", "translation"]) ?? rawCells[1],
+        frenchExample: pickValue(rawJson, ["french_example", "example", "sentence"]) ?? rawCells[2],
+        englishExampleTranslation: pickValue(rawJson, ["english_example_translation", "english_example", "example_translation"]) ?? rawCells[3],
+        cefrLevel: pickValue(rawJson, ["cefr_level", "level", "cefr"]),
+        topic: pickValue(rawJson, ["topic", "category"]) ?? sheetName,
+        tags: splitTags(pickValue(rawJson, ["tags", "tag"])),
+        rawCells,
+        rawJson,
+      });
+      rowNumber += 1;
     }
   }
 
-  return { rows, skipped };
+  return rows;
 }
 
 function findHeaderRow(matrix: Array<Array<string | number | null>>) {
   for (let index = 0; index < Math.min(matrix.length, 12); index += 1) {
     const names = matrix[index].map((cell) => normalizeHeader(String(cell ?? "")));
-    if (names.some((name) => name === "french_word") && names.some((name) => name === "english_meaning")) {
+    if (names.some((name) => name === "french_word") || names.some((name) => name === "english_meaning")) {
       return { index, names };
     }
   }
   return null;
-}
-
-function parseObjectRow(
-  row: Array<string | number | null>,
-  headers: string[],
-  fallbackTopic: string,
-): VocabularyImportRow | null {
-  const values = Object.fromEntries(headers.map((header, index) => [header, String(row[index] ?? "").trim()]));
-  const frenchWord = values.french_word;
-  const englishMeaning = values.english_meaning;
-
-  if (!frenchWord || !englishMeaning) {
-    return null;
-  }
-
-  return normalizeVocabularyRow({
-    frenchWord,
-    englishMeaning,
-    frenchExample: values.french_example,
-    englishExampleTranslation: values.english_example_translation,
-    cefrLevel: values.cefr_level,
-    topic: values.topic || fallbackTopic,
-    tags: splitTags(values.tags),
-  });
-}
-
-function parseLineRow(line: string, fallbackTopic: string): VocabularyImportRow | null {
-  const cleaned = line
-    .replace(/^\s*\d+[\).:-]\s*/, "")
-    .replace(/\s+/g, " ")
-    .trim();
-  const match = cleaned.match(/^(.+?)\s*(?:—|--|-|:)\s*(.+)$/);
-  if (!match) {
-    return null;
-  }
-
-  const frenchWord = match[1]?.trim();
-  const englishMeaning = match[2]?.replace(/\([^)]*\)/g, "").trim();
-  if (!frenchWord || !englishMeaning || frenchWord.length > 80 || englishMeaning.length > 140) {
-    return null;
-  }
-
-  return normalizeVocabularyRow({
-    frenchWord,
-    englishMeaning,
-    topic: fallbackTopic,
-    tags: inferTags(frenchWord, fallbackTopic),
-  });
-}
-
-function normalizeVocabularyRow(input: {
-  frenchWord: string;
-  englishMeaning: string;
-  frenchExample?: string;
-  englishExampleTranslation?: string;
-  cefrLevel?: string;
-  topic?: string;
-  tags?: string[];
-}): VocabularyImportRow {
-  const topic = normalizeTopic(input.topic);
-  const cefrLevel = normalizeCefr(input.cefrLevel, input.frenchWord);
-  const tags = [...new Set(["excel-import", topic.toLowerCase(), ...(input.tags ?? [])])];
-
-  return {
-    french_word: input.frenchWord.trim(),
-    english_meaning: input.englishMeaning.trim(),
-    french_example:
-      input.frenchExample?.trim() ||
-      `Dans un contexte d'examen, le mot "${input.frenchWord.trim()}" peut changer le sens de la phrase.`,
-    english_example_translation:
-      input.englishExampleTranslation?.trim() ||
-      `In an exam context, the word "${input.frenchWord.trim()}" can change the meaning of the sentence.`,
-    cefr_level: cefrLevel,
-    topic,
-    exam_type: "BOTH",
-    frequency_score: inferFrequencyScore(cefrLevel, tags),
-    tags,
-    is_published: true,
-  };
 }
 
 function normalizeHeader(header: string) {
@@ -222,56 +203,150 @@ function normalizeHeader(header: string) {
   return normalized;
 }
 
-function normalizeCefr(value: string | undefined, frenchWord: string) {
-  const upper = value?.trim().toUpperCase().replace("-", "_");
-  if (upper && ["A1", "A2", "B1", "B1_PLUS", "B2", "B2_PLUS", "C1"].includes(upper)) {
-    return upper;
-  }
-
-  if (frenchWord.length > 16 || frenchWord.includes(" ")) return "B1_PLUS";
-  return "B1";
+function mergeAiCleanup(rows: ClassifiedVocabularyRow[], items: CleanedImportItem[]) {
+  const byRowNumber = new Map(items.map((item) => [item.row_number, item]));
+  return rows.map((row) => {
+    const cleaned = byRowNumber.get(row.rowNumber);
+    if (!cleaned) return row;
+    return {
+      ...row,
+      detectedType: cleaned.detected_type,
+      shouldImportAsFlashcard: cleaned.should_import_as_flashcard,
+      frenchWord: cleaned.french_word.trim(),
+      englishMeaning: cleaned.english_meaning.trim(),
+      frenchExample: cleaned.french_example.trim() || null,
+      englishExampleTranslation: cleaned.english_example_translation.trim() || null,
+      cefrLevel: cleaned.cefr_level,
+      topic: cleaned.topic.toUpperCase(),
+      examType: cleaned.exam_type,
+      tags: [...new Set(["excel-import", ...cleaned.tags.map((tag) => tag.toLowerCase())])],
+      confidence: cleaned.confidence,
+      reason: `AI cleanup: ${cleaned.reason}`,
+      needsAiCleanup: false,
+    } satisfies ClassifiedVocabularyRow;
+  });
 }
 
-function normalizeTopic(value: string | undefined) {
-  const upper = value?.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_") ?? "";
-  if (upper.includes("WORK") || upper.includes("JOB")) return "WORK";
-  if (upper.includes("HOUSE") || upper.includes("LOGEMENT")) return "HOUSING";
-  if (upper.includes("HEALTH") || upper.includes("SANTE")) return "HEALTH";
-  if (upper.includes("ADMIN")) return "ADMINISTRATION";
-  if (upper.includes("OPINION")) return "OPINION";
-  if (upper.includes("EDUCATION") || upper.includes("STUDY")) return "EDUCATION";
-  if (upper.includes("IMMIGRATION")) return "IMMIGRATION";
-  if (upper.includes("TRAVEL")) return "TRAVEL";
-  return "DAILY_LIFE";
+async function processRow(
+  supabase: ReturnType<typeof createClient>,
+  row: ClassifiedVocabularyRow,
+  batchId: string,
+  existingKeys: Set<string>,
+): Promise<{ action: ImportAction; reason: string; reportKey: "imported_count" | "skipped_count" | "concept_count" | "duplicate_count" }> {
+  if (row.detectedType === "grammar_concept") {
+    const conceptPayload = {
+      title: row.frenchWord || row.englishMeaning || `Concept row ${row.rowNumber}`,
+      description: row.englishMeaning || row.reason,
+      french_example: row.frenchExample,
+      english_explanation: row.englishExampleTranslation,
+      level: row.cefrLevel,
+      topic: row.topic,
+      exam_type: row.examType,
+      tags: [...new Set([...row.tags, "grammar-concept"])],
+      source_import_id: batchId,
+      is_published: false,
+    };
+    const { data: existingConcept } = await supabase
+      .from("concepts")
+      .select("id")
+      .ilike("title", conceptPayload.title)
+      .eq("topic", conceptPayload.topic)
+      .maybeSingle();
+    const { error } = existingConcept
+      ? await supabase.from("concepts").update(conceptPayload).eq("id", existingConcept.id)
+      : await supabase.from("concepts").insert(conceptPayload);
+    if (error) return { action: "needs_review", reason: error.message, reportKey: "skipped_count" };
+    return { action: "concept_created", reason: row.reason, reportKey: "concept_count" };
+  }
+
+  if (!row.shouldImportAsFlashcard) {
+    return { action: "skipped", reason: row.reason, reportKey: "skipped_count" };
+  }
+
+  const normalizedKey = normalizeVocabularyKey(row.frenchWord);
+  if (!normalizedKey || existingKeys.has(normalizedKey)) {
+    return { action: "duplicate", reason: "Duplicate normalized French term.", reportKey: "duplicate_count" };
+  }
+
+  const { error } = await supabase.from("vocabulary").insert({
+    french_word: row.frenchWord,
+    english_meaning: row.englishMeaning,
+    french_example: row.frenchExample,
+    english_example_translation: row.englishExampleTranslation,
+    cefr_level: row.cefrLevel,
+    topic: row.topic,
+    exam_type: row.examType,
+    frequency_score: row.frequencyScore,
+    tags: [...new Set([...row.tags, row.detectedType.replace("_", "-")])],
+    source_import_id: batchId,
+    import_confidence: row.confidence,
+    is_published: true,
+  });
+
+  if (error) {
+    return { action: "needs_review", reason: error.message, reportKey: "skipped_count" };
+  }
+
+  existingKeys.add(normalizedKey);
+  return { action: "imported", reason: row.reason, reportKey: "imported_count" };
 }
 
-function inferTopic(sheetName: string) {
-  if (/day\s*[12]/i.test(sheetName)) return "DAILY_LIFE";
-  if (/work|job|emploi/i.test(sheetName)) return "WORK";
-  if (/admin|immigration/i.test(sheetName)) return "ADMINISTRATION";
-  return "DAILY_LIFE";
+async function loadExistingVocabularyKeys(supabase: ReturnType<typeof createClient>) {
+  const { data, error } = await supabase.from("vocabulary").select("french_word");
+  if (error) throw new Error(`Unable to inspect existing vocabulary: ${error.message}`);
+  return new Set((data ?? []).map((row) => normalizeVocabularyKey(String(row.french_word ?? ""))));
 }
 
-function inferTags(frenchWord: string, topic: string) {
-  const lower = frenchWord.toLowerCase();
-  const tags = [topic.toLowerCase()];
-  if (["mais", "donc", "parce que", "pourtant", "cependant", "toutefois", "ainsi"].includes(lower)) {
-    tags.push("connector");
-  }
-  if (["jamais", "rien", "personne", "ni", "sans", "pas du tout"].some((token) => lower.includes(token))) {
-    tags.push("listening-trap", "negation");
-  }
-  if (/\d|heure|demain|hier|aujourd/.test(lower)) {
-    tags.push("listening-trap", "time");
-  }
-  return tags;
+function toRowLog(batchId: string, row: ClassifiedVocabularyRow, action: ImportAction, reason: string) {
+  return {
+    batch_id: batchId,
+    row_number: row.rowNumber,
+    raw_json: row.raw.rawJson,
+    detected_type: row.detectedType,
+    action_taken: action,
+    reason,
+    normalized_json: {
+      french_word: row.frenchWord,
+      english_meaning: row.englishMeaning,
+      french_example: row.frenchExample,
+      english_example_translation: row.englishExampleTranslation,
+      cefr_level: row.cefrLevel,
+      topic: row.topic,
+      exam_type: row.examType,
+      tags: row.tags,
+    },
+    confidence: row.confidence,
+  };
 }
 
-function inferFrequencyScore(level: string, tags: string[]) {
-  if (tags.includes("connector")) return 92;
-  if (tags.includes("listening-trap")) return 88;
-  if (level.startsWith("B2")) return 82;
-  return 76;
+function createBaseReport(
+  workbook: XLSX.WorkBook,
+  rawRows: RawVocabularyImportRow[],
+  classifiedRows: ClassifiedVocabularyRow[],
+  aiCleanedCount: number,
+) {
+  return {
+    workbookPath,
+    sheetsDetected: workbook.SheetNames,
+    total_rows: rawRows.length,
+    vocabulary_candidates: classifiedRows.filter((row) => row.shouldImportAsFlashcard).length,
+    grammar_concepts: classifiedRows.filter((row) => row.detectedType === "grammar_concept").length,
+    skipped_preview: classifiedRows.filter((row) => !row.shouldImportAsFlashcard && row.detectedType !== "grammar_concept").length,
+    imported_count: 0,
+    skipped_count: 0,
+    concept_count: 0,
+    duplicate_count: 0,
+    ai_cleaned_count: aiCleanedCount,
+    dryRun,
+  };
+}
+
+function pickValue(rawJson: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = rawJson[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return undefined;
 }
 
 function splitTags(value?: string) {
@@ -279,20 +354,6 @@ function splitTags(value?: string) {
     .split(/[,;|]/)
     .map((tag) => tag.trim().toLowerCase())
     .filter(Boolean);
-}
-
-function dedupeRows(rows: VocabularyImportRow[]) {
-  const seen = new Set<string>();
-  return rows.filter((row) => {
-    const key = buildDedupeKey(row.french_word, row.english_meaning);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function buildDedupeKey(frenchWord: string, englishMeaning: string) {
-  return `${frenchWord.trim().toLowerCase()}::${englishMeaning.trim().toLowerCase()}`;
 }
 
 function chunk<T>(items: T[], size: number) {
@@ -303,28 +364,34 @@ function chunk<T>(items: T[], size: number) {
   return chunks;
 }
 
+function parseArgs(rawArgs: string[]) {
+  const parsed: Record<string, string | boolean | undefined> = {};
+  for (const arg of rawArgs) {
+    const [key, ...valueParts] = arg.replace(/^--/, "").split("=");
+    parsed[key] = valueParts.length ? valueParts.join("=") : true;
+  }
+  return parsed;
+}
+
 function loadEnvFile(fileName: string) {
   const envPath = resolve(process.cwd(), fileName);
-  try {
-    const contents = readFileSync(envPath, "utf8");
-    for (const line of contents.split(/\r?\n/)) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
-      if (!match) continue;
-      const [, key, rawValue] = match;
-      if (process.env[key]) continue;
-      process.env[key] = rawValue.replace(/^["']|["']$/g, "");
-    }
-  } catch {
-    // The caller may provide env vars through the shell instead.
+  if (!existsSync(envPath)) return;
+  const contents = readFileSync(envPath, "utf8");
+  for (const line of contents.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    if (!match) continue;
+    const [, key, rawValue] = match;
+    if (process.env[key]) continue;
+    process.env[key] = rawValue.replace(/^["']|["']$/g, "");
   }
 }
 
 function requireEnv(name: string) {
   const value = process.env[name];
   if (!value) {
-    throw new Error(`${name} is required for live import. Use --dry-run to inspect the workbook without writing.`);
+    throw new Error(`${name} is required for live import. Use --dry-run to inspect without writing.`);
   }
   return value;
 }

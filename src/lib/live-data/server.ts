@@ -142,7 +142,16 @@ export async function getVocabularyBankWords(userId: string): Promise<Vocabulary
   }
 
   const bankMap = new Map((bankResult.data ?? []).map((row) => [row.vocabulary_id, row]));
-  return (vocabularyResult.data ?? []).map((row) => mapVocabularyRow(row, bankMap.get(row.id)));
+  return (vocabularyResult.data ?? [])
+    .filter(isFlashcardVocabularyRow)
+    .map((row) => mapVocabularyRow(row, bankMap.get(row.id)));
+}
+
+function isFlashcardVocabularyRow(row: VocabularyRow) {
+  const tags = row.tags ?? [];
+  return !["bad-import", "grammar-concept", "section-heading", "study-schedule"].some((tag) =>
+    tags.includes(tag),
+  );
 }
 
 export async function getProgressAnalytics(userId: string): Promise<AnalyticsData[]> {

@@ -5,6 +5,7 @@ import { DailyTaskCard } from "@/components/dashboard/DailyTaskCard";
 import { ReadinessScoreCard } from "@/components/dashboard/ReadinessScoreCard";
 import { SkillProgressCard } from "@/components/dashboard/SkillProgressCard";
 import { WeaknessQuestCard } from "@/components/dashboard/WeaknessQuestCard";
+import { AddToHomeScreenPrompt } from "@/components/pwa/AddToHomeScreenPrompt";
 import { getAuthContext, getProfileDisplayName } from "@/lib/auth";
 import { syncUserBadges } from "@/lib/gamification/badges";
 import { getUserReadinessSnapshot } from "@/lib/gamification/readiness";
@@ -118,6 +119,8 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <AddToHomeScreenPrompt />
 
       <ReadinessScoreCard score={readinessScore} />
 

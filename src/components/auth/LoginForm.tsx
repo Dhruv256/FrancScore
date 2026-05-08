@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ArrowRight, Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles } from "lucide-react";
 import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { createClient } from "@/lib/supabase/client";
+import { AddToHomeScreenPrompt } from "@/components/pwa/AddToHomeScreenPrompt";
 
 export function LoginForm() {
   const router = useRouter();
@@ -133,6 +134,9 @@ export function LoginForm() {
               Sign up free
             </Link>
           </p>
+          <div className="mt-5">
+            <AddToHomeScreenPrompt compact />
+          </div>
         </div>
       </div>
     </div>

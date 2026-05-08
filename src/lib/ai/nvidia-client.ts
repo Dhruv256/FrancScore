@@ -73,6 +73,8 @@ export function getConfiguredModelId(purpose: NvidiaModelPurpose): NvidiaModelId
       return env.NVIDIA_SAFETY_MODEL;
     case "SPEECH_TO_TEXT":
       return env.NVIDIA_STT_MODEL;
+    case "IMPORT_CLEANUP":
+      return env.NVIDIA_IMPORT_CLEANUP_MODEL ?? env.NVIDIA_MAIN_MODEL;
   }
 }
 
@@ -306,6 +308,8 @@ function getApiKeyForPurpose(
       return env.NVIDIA_SAFETY_API_KEY ?? env.NVIDIA_API_KEY;
     case "SPEECH_TO_TEXT":
       return env.NVIDIA_STT_API_KEY ?? env.NVIDIA_API_KEY;
+    case "IMPORT_CLEANUP":
+      return env.NVIDIA_MAIN_API_KEY ?? env.NVIDIA_API_KEY;
   }
 }
 
@@ -319,6 +323,8 @@ function getMissingKeyMessage(purpose: NvidiaModelPurpose) {
       return "NVIDIA safety checks require NVIDIA_SAFETY_API_KEY or NVIDIA_API_KEY on the server.";
     case "SPEECH_TO_TEXT":
       return "NVIDIA speech-to-text requests require NVIDIA_STT_API_KEY or NVIDIA_API_KEY on the server.";
+    case "IMPORT_CLEANUP":
+      return "Vocabulary import cleanup requires NVIDIA_MAIN_API_KEY or NVIDIA_API_KEY on the server.";
   }
 }
 
@@ -340,6 +346,8 @@ function isFeatureEnabledForPurpose(
       return env.AI_ENABLE_SAFETY_CHECK;
     case "SPEECH_TO_TEXT":
       return env.AI_ENABLE_STT;
+    case "IMPORT_CLEANUP":
+      return Boolean(env.NVIDIA_IMPORT_CLEANUP_MODEL ?? env.NVIDIA_MAIN_MODEL);
   }
 }
 

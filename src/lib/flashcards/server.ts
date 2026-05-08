@@ -56,6 +56,7 @@ export async function getFlashcardDeck(
   );
 
   const cards = (vocabularyRows ?? [])
+    .filter(isFlashcardVocabularyRow)
     .map((row) => mapFlashcardCard(row, wordBankMap.get(row.id)))
     .filter((card) => matchesDeckType(card, filter.deckType))
     .filter((card) => matchesFilters(card, filter))
@@ -65,6 +66,13 @@ export async function getFlashcardDeck(
     cards,
     filter,
   };
+}
+
+function isFlashcardVocabularyRow(row: VocabularyRow) {
+  const tags = row.tags ?? [];
+  return !["bad-import", "grammar-concept", "section-heading", "study-schedule"].some((tag) =>
+    tags.includes(tag),
+  );
 }
 
 export async function startFlashcardSession(

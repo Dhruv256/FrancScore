@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
+import { AddToHomeScreenPrompt } from "@/components/pwa/AddToHomeScreenPrompt";
 
 const showcasePhones = [
   {
@@ -191,6 +192,7 @@ export default function LandingPage() {
                 Open app
               </Link>
             </div>
+            <AddToHomeScreenPrompt compact />
           </div>
 
           <div className="relative min-h-[640px]">

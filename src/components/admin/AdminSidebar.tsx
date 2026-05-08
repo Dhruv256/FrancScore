@@ -34,6 +34,7 @@ const navItems = [
   { label: "Overview", href: "/admin", icon: "LayoutDashboard" },
   { label: "Questions", href: "/admin/questions", icon: "HelpCircle" },
   { label: "Vocabulary", href: "/admin/vocabulary", icon: "Library" },
+  { label: "Vocab Import", href: "/admin/import/vocabulary", icon: "Library" },
   { label: "Passages", href: "/admin/passages", icon: "BookOpen" },
   { label: "French Book", href: "/admin/book", icon: "BookOpen" },
   { label: "Writing Prompts", href: "/admin/writing", icon: "PenTool" },
