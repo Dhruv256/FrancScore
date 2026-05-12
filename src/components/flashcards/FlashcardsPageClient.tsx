@@ -374,11 +374,6 @@ export function FlashcardsPageClient({
   };
 
   const handleSwipeReview = (mapping: SwipeReviewMapping) => {
-    if (!isFlipped) {
-      setIsFlipped(true);
-      return;
-    }
-
     void handleReview(mapping.rating, mapping.action);
   };
 

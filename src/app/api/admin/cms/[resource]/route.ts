@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/auth";
+import { getAdminAuthErrorResponse, requireAdmin } from "@/lib/auth/admin";
 import { adminMutationSchema, adminSchemas } from "@/lib/admin/schemas";
 import { listAdminResource } from "@/lib/admin/server";
 import type { AdminResource } from "@/lib/admin/types";
@@ -22,8 +22,15 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ resource: string }> },
 ) {
-  const auth = await requireAdmin();
-  if (auth) return auth;
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const authError = getAdminAuthErrorResponse(error);
+    if (authError) {
+      return NextResponse.json(authError.body, { status: authError.status });
+    }
+    throw error;
+  }
 
   const { resource } = await context.params;
   if (!isValidResource(resource)) {
@@ -58,12 +65,20 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ resource: string }> },
 ) {
-  const auth = await requireAdmin();
-  if (auth) return auth;
+  let adminUserId: string;
+  try {
+    const { user } = await requireAdmin();
+    adminUserId = user.id;
+  } catch (error) {
+    const authError = getAdminAuthErrorResponse(error);
+    if (authError) {
+      return NextResponse.json(authError.body, { status: authError.status });
+    }
+    throw error;
+  }
 
-  const { user } = await getAuthContext();
   const { resource } = await context.params;
-  if (!user || !isValidResource(resource)) {
+  if (!isValidResource(resource)) {
     return NextResponse.json({ error: "Unknown admin resource." }, { status: 404 });
   }
 
@@ -100,7 +115,7 @@ export async function POST(
       const record = await createRecord(
         resource,
         parsedPayload.data as Record<string, unknown>,
-        user.id,
+        adminUserId,
       );
       return NextResponse.json({ record });
     }
@@ -113,7 +128,7 @@ export async function POST(
       resource,
       parsedMutation.data.recordId,
       parsedPayload.data as Record<string, unknown>,
-      user.id,
+      adminUserId,
     );
     return NextResponse.json({ record });
   } catch (error) {
@@ -132,17 +147,6 @@ export async function POST(
       { status: 500 },
     );
   }
-}
-
-async function requireAdmin() {
-  const { user, profile } = await getAuthContext();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (profile?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  return null;
 }
 
 function isValidResource(resource: string): resource is AdminResource {

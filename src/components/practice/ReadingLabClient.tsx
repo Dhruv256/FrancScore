@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PracticeFilterBar } from "@/components/practice/PracticeFilterBar";
 import { PracticeProgressPanel } from "@/components/practice/PracticeProgressPanel";
+import { QuestionNavigator, type QuestionNavigatorItem } from "@/components/practice/QuestionNavigator";
 import type {
   PracticeAttemptResponse,
   PracticeFilters,
@@ -47,12 +48,15 @@ export function ReadingLabClient({ defaultExamType }: ReadingLabClientProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [result, setResult] = useState<PracticeAttemptResponse | null>(null);
+  const [answersByQuestion, setAnswersByQuestion] = useState<Record<string, number>>({});
+  const [resultsByQuestion, setResultsByQuestion] = useState<Record<string, PracticeAttemptResponse>>({});
+  const [flaggedQuestionIds, setFlaggedQuestionIds] = useState<Set<string>>(new Set());
   const [showVocabulary, setShowVocabulary] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questionStartedAt, setQuestionStartedAt] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data?.items]);
   const progress = result?.progress ?? data?.progress ?? defaultProgress;
   const question = items[currentIndex] ?? null;
   const passage = question?.passage ?? null;
@@ -88,6 +92,9 @@ export function ReadingLabClient({ defaultExamType }: ReadingLabClientProps) {
         setCurrentIndex(0);
         setSelectedAnswer(null);
         setResult(null);
+        setAnswersByQuestion({});
+        setResultsByQuestion({});
+        setFlaggedQuestionIds(new Set());
         setShowVocabulary(false);
         setQuestionStartedAt(Date.now());
         setElapsedSeconds(0);
@@ -176,6 +183,8 @@ export function ReadingLabClient({ defaultExamType }: ReadingLabClientProps) {
       }
 
       setResult(payload);
+      setAnswersByQuestion((current) => ({ ...current, [question.id]: answerIndex }));
+      setResultsByQuestion((current) => ({ ...current, [question.id]: payload }));
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to save your answer.",
@@ -188,13 +197,51 @@ export function ReadingLabClient({ defaultExamType }: ReadingLabClientProps) {
 
   const goToNextQuestion = () => {
     const nextIndex = currentIndex + 1;
+    jumpToQuestion(nextIndex >= items.length ? 0 : nextIndex);
+  };
 
-    setCurrentIndex(nextIndex >= items.length ? 0 : nextIndex);
-    setSelectedAnswer(null);
-    setResult(null);
+  const jumpToQuestion = (index: number) => {
+    const nextQuestion = items[index];
+    if (!nextQuestion) return;
+    setCurrentIndex(index);
+    setSelectedAnswer(answersByQuestion[nextQuestion.id] ?? null);
+    setResult(resultsByQuestion[nextQuestion.id] ?? null);
     setShowVocabulary(false);
     setQuestionStartedAt(Date.now());
     setElapsedSeconds(0);
+  };
+
+  const navigatorItems = useMemo<QuestionNavigatorItem[]>(
+    () =>
+      items.map((item, index) => {
+        const savedResult = resultsByQuestion[item.id];
+        return {
+          id: item.id,
+          label: `Q${index + 1}`,
+          status: savedResult
+            ? savedResult.isCorrect
+              ? "correct"
+              : "incorrect"
+            : answersByQuestion[item.id] !== undefined
+              ? "answered"
+              : "unanswered",
+          flagged: flaggedQuestionIds.has(item.id),
+        };
+      }),
+    [answersByQuestion, flaggedQuestionIds, items, resultsByQuestion],
+  );
+
+  const toggleCurrentFlag = () => {
+    if (!question) return;
+    setFlaggedQuestionIds((current) => {
+      const next = new Set(current);
+      if (next.has(question.id)) {
+        next.delete(question.id);
+      } else {
+        next.add(question.id);
+      }
+      return next;
+    });
   };
 
   return (
@@ -298,6 +345,15 @@ export function ReadingLabClient({ defaultExamType }: ReadingLabClientProps) {
               {formatDuration(elapsedSeconds)}
             </span>
           </div>
+
+          <QuestionNavigator
+            items={navigatorItems}
+            currentIndex={currentIndex}
+            onJump={jumpToQuestion}
+            onPrevious={() => jumpToQuestion(currentIndex === 0 ? items.length - 1 : currentIndex - 1)}
+            onNext={() => jumpToQuestion(currentIndex >= items.length - 1 ? 0 : currentIndex + 1)}
+            onToggleFlag={toggleCurrentFlag}
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="card p-6">

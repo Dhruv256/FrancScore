@@ -20,6 +20,7 @@ import {
   Zap,
   ChevronLeft,
   Flame,
+  Shield,
 } from "lucide-react";
 import { useState } from "react";
 import { SignOutButton } from "@/components/auth/SignOutButton";
@@ -36,6 +37,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string; style?: 
   FileCheck,
   BarChart3,
   Award,
+  Shield,
 };
 
 const navItems = [
@@ -58,6 +60,7 @@ type SidebarProps = {
     fullName: string;
     totalXp: number;
     currentStreak: number;
+    isAdmin: boolean;
   };
 };
 
@@ -157,6 +160,11 @@ export function Sidebar({ userSummary }: SidebarProps) {
                     <Flame className="w-3 h-3 text-brand-green" />
                     {userSummary.currentStreak}
                   </span>
+                  {userSummary.isAdmin && (
+                    <span className="rounded-full bg-brand-green px-2 py-0.5 text-[10px] font-black text-[#111111]">
+                      ADMIN
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -194,6 +202,21 @@ export function Sidebar({ userSummary }: SidebarProps) {
               </Link>
             );
           })}
+          {userSummary.isAdmin && (
+            <Link
+              href="/admin"
+              onClick={() => setMobileOpen(false)}
+              className={`flex min-h-11 items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-bold transition-all ${
+                pathname?.startsWith("/admin")
+                  ? "bg-brand-green text-[#111111] shadow-[0_12px_26px_rgba(255,122,26,0.2)]"
+                  : "text-text-secondary hover:text-text-inverse hover:bg-white/[0.06]"
+              } ${collapsed ? "justify-center" : ""}`}
+              title={collapsed ? "Admin Dashboard" : undefined}
+            >
+              <Shield className="h-[18px] w-[18px] shrink-0" />
+              {!collapsed && <span>Admin Dashboard</span>}
+            </Link>
+          )}
         </nav>
 
         {/* Bottom section */}

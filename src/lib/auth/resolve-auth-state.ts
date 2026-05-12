@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { isAdminEmail } from "@/lib/auth/admin-email";
 import { isE2ETestModeEnabled } from "@/lib/env/server";
 import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -87,6 +88,26 @@ async function ensureProfileForUser(
       .maybeSingle();
 
     if (existingProfile) {
+      if (isAdminEmail(user.email) && existingProfile.role !== "ADMIN") {
+        const { data: promotedProfile, error: promoteError } = await admin
+          .from("profiles")
+          .update({ role: "ADMIN" })
+          .eq("id", user.id)
+          .select("*")
+          .single();
+
+        if (promoteError) {
+          const formatted = formatSupabaseError(promoteError, {
+            operation: "promote profile during auth bootstrap",
+            table: "public.profiles",
+            env: "server",
+          });
+          return { profile: null, error: formatted.userMessage };
+        }
+
+        return { profile: promotedProfile, error: null };
+      }
+
       return { profile: existingProfile, error: null };
     }
 
@@ -110,7 +131,7 @@ async function ensureProfileForUser(
             user.user_metadata.name ??
             user.email?.split("@")[0] ??
             "FrancScore Learner",
-          role: "USER",
+          role: isAdminEmail(user.email) ? "ADMIN" : "USER",
           onboarding_completed: false,
         },
         { onConflict: "id" },

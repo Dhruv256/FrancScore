@@ -77,6 +77,10 @@ export function getConfiguredModelId(purpose: NvidiaModelPurpose): NvidiaModelId
       return env.NVIDIA_IMPORT_CLEANUP_MODEL ?? env.NVIDIA_MAIN_MODEL;
     case "VOCAB_GENERATION":
       return env.NVIDIA_VOCAB_GENERATION_MODEL ?? env.NVIDIA_MAIN_MODEL;
+    case "PDF_PROCESSING":
+      return env.NVIDIA_PDF_PROCESSING_MODEL ?? env.NVIDIA_MAIN_MODEL;
+    case "LISTENING_SCRIPT":
+      return env.NVIDIA_LISTENING_SCRIPT_MODEL ?? env.NVIDIA_MAIN_MODEL;
   }
 }
 
@@ -314,6 +318,10 @@ function getApiKeyForPurpose(
       return env.NVIDIA_MAIN_API_KEY ?? env.NVIDIA_API_KEY;
     case "VOCAB_GENERATION":
       return env.NVIDIA_MAIN_API_KEY ?? env.NVIDIA_API_KEY;
+    case "PDF_PROCESSING":
+      return env.NVIDIA_MAIN_API_KEY ?? env.NVIDIA_API_KEY;
+    case "LISTENING_SCRIPT":
+      return env.NVIDIA_MAIN_API_KEY ?? env.NVIDIA_API_KEY;
   }
 }
 
@@ -331,6 +339,10 @@ function getMissingKeyMessage(purpose: NvidiaModelPurpose) {
       return "Vocabulary import cleanup requires NVIDIA_MAIN_API_KEY or NVIDIA_API_KEY on the server.";
     case "VOCAB_GENERATION":
       return "Daily AI vocabulary generation requires NVIDIA_MAIN_API_KEY or NVIDIA_API_KEY on the server.";
+    case "PDF_PROCESSING":
+      return "PDF processing requires NVIDIA_MAIN_API_KEY or NVIDIA_API_KEY on the server.";
+    case "LISTENING_SCRIPT":
+      return "Listening script generation requires NVIDIA_MAIN_API_KEY or NVIDIA_API_KEY on the server.";
   }
 }
 
@@ -356,6 +368,10 @@ function isFeatureEnabledForPurpose(
       return Boolean(env.NVIDIA_IMPORT_CLEANUP_MODEL ?? env.NVIDIA_MAIN_MODEL);
     case "VOCAB_GENERATION":
       return env.AI_VOCAB_GENERATION_ENABLED;
+    case "PDF_PROCESSING":
+      return env.PDF_PROCESSING_ENABLED;
+    case "LISTENING_SCRIPT":
+      return Boolean(env.NVIDIA_LISTENING_SCRIPT_MODEL ?? env.NVIDIA_MAIN_MODEL);
   }
 }
 

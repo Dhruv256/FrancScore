@@ -59,7 +59,9 @@ export type DailyVocabGenerationSummary = {
   message: string;
 };
 
-export async function generateDailyVocabularyBatch(): Promise<DailyVocabGenerationSummary> {
+export async function generateDailyVocabularyBatch(input?: {
+  onProgress?: (progress: number, currentStep: string) => Promise<void>;
+}): Promise<DailyVocabGenerationSummary> {
   const env = getServerEnv();
 
   if (!env.AI_VOCAB_GENERATION_ENABLED) {
@@ -83,6 +85,7 @@ export async function generateDailyVocabularyBatch(): Promise<DailyVocabGenerati
   }
 
   if (existingGeneration?.status === "completed") {
+    await input?.onProgress?.(100, "Already generated today");
     return {
       generationId: existingGeneration.id,
       generationDate,
@@ -117,6 +120,7 @@ export async function generateDailyVocabularyBatch(): Promise<DailyVocabGenerati
   }
 
   try {
+    await input?.onProgress?.(15, "Loading existing vocabulary");
     const { existingKeys, existingTermsForPrompt } = await loadExistingVocabularyKeys();
     const primaryModel = env.NVIDIA_VOCAB_GENERATION_MODEL ?? env.NVIDIA_MAIN_MODEL;
     const fallbackModel = env.NVIDIA_VOCAB_FALLBACK_MODEL ?? env.NVIDIA_MAIN_MODEL;
@@ -124,6 +128,7 @@ export async function generateDailyVocabularyBatch(): Promise<DailyVocabGenerati
     let generatedItems: AiVocabItem[] = [];
 
     try {
+      await input?.onProgress?.(30, `Calling vocabulary model for ${requestedCount} items`);
       generatedItems = await requestVocabularyItems({
         count: requestedCount,
         model: primaryModel,
@@ -134,6 +139,7 @@ export async function generateDailyVocabularyBatch(): Promise<DailyVocabGenerati
         throw error;
       }
       modelUsed = fallbackModel;
+      await input?.onProgress?.(35, "Primary model failed, retrying fallback model");
       generatedItems = await requestVocabularyItems({
         count: requestedCount,
         model: fallbackModel,
@@ -141,10 +147,12 @@ export async function generateDailyVocabularyBatch(): Promise<DailyVocabGenerati
       });
     }
 
+    await input?.onProgress?.(70, "Validating and deduplicating vocabulary");
     let cleaned = cleanGeneratedItems(generatedItems, existingKeys);
     const missingCount = requestedCount - cleaned.valid.length;
 
     if (missingCount > 0) {
+      await input?.onProgress?.(78, `Generating ${missingCount} replacement items`);
       const retryItems = await requestVocabularyItems({
         count: missingCount,
         model: modelUsed,
@@ -162,6 +170,7 @@ export async function generateDailyVocabularyBatch(): Promise<DailyVocabGenerati
       mapAiItemToVocabularyInsert(item, generationId),
     );
 
+    await input?.onProgress?.(88, `Inserting ${rows.length} vocabulary rows`);
     const { error: insertError } = rows.length
       ? await supabase.from("vocabulary").insert(rows)
       : { error: null };
@@ -172,6 +181,7 @@ export async function generateDailyVocabularyBatch(): Promise<DailyVocabGenerati
 
     const insertedCount = rows.length;
     const failedCount = Math.max(0, requestedCount - insertedCount - cleaned.duplicates);
+    await input?.onProgress?.(95, "Saving generation summary");
     await supabase
       .from("daily_vocab_generations")
       .update({

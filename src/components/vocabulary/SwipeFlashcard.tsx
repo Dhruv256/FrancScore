@@ -1,6 +1,13 @@
 "use client";
 
-import { motion, useMotionValue, useTransform, type MotionValue } from "framer-motion";
+import { useEffect } from "react";
+import {
+  motion,
+  useAnimationControls,
+  useMotionValue,
+  useTransform,
+  type MotionValue,
+} from "framer-motion";
 import { RotateCcw } from "lucide-react";
 import type { FlashcardCard } from "@/lib/flashcards/types";
 import { SWIPE_REVIEW_MAPPINGS, type SwipeReviewMapping } from "@/lib/vocabulary/review";
@@ -30,37 +37,74 @@ export function SwipeFlashcard({
 }: SwipeFlashcardProps) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const controls = useAnimationControls();
   const rotate = useTransform(x, [-220, 0, 220], [-10, 0, 10]);
   const weakOpacity = useTransform(x, [-120, -30], [1, 0]);
   const strongOpacity = useTransform(x, [30, 120], [0, 1]);
   const masteredOpacity = useTransform(y, [-120, -30], [1, 0]);
   const skipOpacity = useTransform(y, [30, 120], [0, 1]);
 
+  useEffect(() => {
+    x.set(0);
+    y.set(0);
+    void controls.start({
+      opacity: 1,
+      scale: 1,
+      x: 0,
+      y: 0,
+      rotate: 0,
+      transition: { type: "spring", stiffness: 280, damping: 26 },
+    });
+  }, [card.id, controls, x, y]);
+
   return (
     <motion.div
       className="relative mx-auto w-full max-w-2xl touch-none select-none"
       style={{ x, y, rotate }}
+      animate={controls}
       drag={!disabled}
       dragElastic={0.22}
+      dragMomentum={false}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-      onDragEnd={(_, info) => {
+      onDragEnd={async (_, info) => {
         const horizontal = Math.abs(info.offset.x);
         const vertical = Math.abs(info.offset.y);
         const threshold = 95;
 
         if (horizontal < threshold && vertical < threshold) {
+          await controls.start({
+            x: 0,
+            y: 0,
+            rotate: 0,
+            transition: { type: "spring", stiffness: 500, damping: 34 },
+          });
           return;
         }
 
         if (horizontal >= vertical) {
-          onSwipe(info.offset.x < 0 ? SWIPE_REVIEW_MAPPINGS.left : SWIPE_REVIEW_MAPPINGS.right);
+          const mapping = info.offset.x < 0 ? SWIPE_REVIEW_MAPPINGS.left : SWIPE_REVIEW_MAPPINGS.right;
+          await controls.start({
+            x: info.offset.x < 0 ? -520 : 520,
+            y: info.offset.y * 0.35,
+            opacity: 0,
+            rotate: info.offset.x < 0 ? -18 : 18,
+            transition: { type: "tween", duration: 0.22, ease: "easeOut" },
+          });
+          onSwipe(mapping);
           return;
         }
 
-        onSwipe(info.offset.y < 0 ? SWIPE_REVIEW_MAPPINGS.up : SWIPE_REVIEW_MAPPINGS.down);
+        const mapping = info.offset.y < 0 ? SWIPE_REVIEW_MAPPINGS.up : SWIPE_REVIEW_MAPPINGS.down;
+        await controls.start({
+          x: info.offset.x * 0.25,
+          y: info.offset.y < 0 ? -560 : 560,
+          opacity: 0,
+          scale: 0.96,
+          transition: { type: "tween", duration: 0.22, ease: "easeOut" },
+        });
+        onSwipe(mapping);
       }}
       initial={{ opacity: 0, scale: 0.96, y: 16 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.94 }}
       transition={{ type: "spring", stiffness: 240, damping: 24 }}
     >

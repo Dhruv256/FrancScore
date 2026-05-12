@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/auth";
+import { createRouteTimer } from "@/lib/observability/timing";
 import { getPracticeQuestionSet } from "@/lib/practice/server";
 import type {
   PracticeExamFilter,
@@ -11,6 +12,7 @@ import type {
 
 export async function GET(request: Request) {
   const { user } = await getAuthContext();
+  const timer = createRouteTimer("GET /api/practice/questions", user?.id);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,8 +35,11 @@ export async function GET(request: Request) {
 
   try {
     const data = await getPracticeQuestionSet(filters, user.id);
+    timer.step("loaded_question_set");
+    timer.done({ count: data.items.length, skill: filters.skill });
     return NextResponse.json(data);
   } catch (error) {
+    timer.done({ failed: true });
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to load practice questions." },
       { status: 500 },

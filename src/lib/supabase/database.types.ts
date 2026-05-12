@@ -99,6 +99,40 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["badges"]["Insert"]>;
         Relationships: [];
       };
+      concepts: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          english_explanation: string | null;
+          exam_type: string;
+          french_example: string | null;
+          id: string;
+          is_published: boolean;
+          level: string | null;
+          source_import_id: string | null;
+          tags: string[];
+          title: string;
+          topic: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          english_explanation?: string | null;
+          exam_type?: string;
+          french_example?: string | null;
+          id?: string;
+          is_published?: boolean;
+          level?: string | null;
+          source_import_id?: string | null;
+          tags?: string[];
+          title: string;
+          topic?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["concepts"]["Insert"]>;
+        Relationships: [];
+      };
       daily_tasks: {
         Row: {
           cefr_level: string;
@@ -169,6 +203,160 @@ export interface Database {
           status?: string;
         };
         Update: Partial<Database["public"]["Tables"]["daily_vocab_generations"]["Insert"]>;
+        Relationships: [];
+      };
+      generated_exercises: {
+        Row: {
+          cefr_level: string | null;
+          content_json: Json;
+          created_at: string;
+          exam_type: string;
+          exercise_type: string;
+          id: string;
+          is_published: boolean;
+          source_import_id: string | null;
+          tags: string[];
+          title: string | null;
+          topic: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          cefr_level?: string | null;
+          content_json?: Json;
+          created_at?: string;
+          exam_type?: string;
+          exercise_type: string;
+          id?: string;
+          is_published?: boolean;
+          source_import_id?: string | null;
+          tags?: string[];
+          title?: string | null;
+          topic?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["generated_exercises"]["Insert"]>;
+        Relationships: [];
+      };
+      pdf_import_batches: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          error_message: string | null;
+          file_name: string;
+          id: string;
+          model_used: string | null;
+          status: string;
+          storage_path: string | null;
+          total_chunks: number;
+          total_pages: number;
+          uploaded_by: string | null;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          error_message?: string | null;
+          file_name: string;
+          id?: string;
+          model_used?: string | null;
+          status?: string;
+          storage_path?: string | null;
+          total_chunks?: number;
+          total_pages?: number;
+          uploaded_by?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["pdf_import_batches"]["Insert"]>;
+        Relationships: [];
+      };
+      pdf_import_chunks: {
+        Row: {
+          ai_result_json: Json | null;
+          ai_status: string;
+          batch_id: string;
+          chunk_index: number;
+          created_at: string;
+          id: string;
+          page_end: number | null;
+          page_start: number | null;
+          processed_at: string | null;
+          raw_text: string;
+        };
+        Insert: {
+          ai_result_json?: Json | null;
+          ai_status?: string;
+          batch_id: string;
+          chunk_index: number;
+          created_at?: string;
+          id?: string;
+          page_end?: number | null;
+          page_start?: number | null;
+          processed_at?: string | null;
+          raw_text: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["pdf_import_chunks"]["Insert"]>;
+        Relationships: [];
+      };
+      pdf_import_items: {
+        Row: {
+          batch_id: string;
+          chunk_id: string | null;
+          confidence: number;
+          content_json: Json;
+          created_at: string;
+          id: string;
+          item_type: string;
+          status: string;
+          suggested_destination: string | null;
+          title: string | null;
+        };
+        Insert: {
+          batch_id: string;
+          chunk_id?: string | null;
+          confidence?: number;
+          content_json?: Json;
+          created_at?: string;
+          id?: string;
+          item_type: string;
+          status?: string;
+          suggested_destination?: string | null;
+          title?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["pdf_import_items"]["Insert"]>;
+        Relationships: [];
+      };
+      processing_jobs: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          current_step: string | null;
+          error_message: string | null;
+          id: string;
+          input_json: Json;
+          job_type: string;
+          progress: number;
+          result_json: Json | null;
+          started_at: string | null;
+          status: string;
+          total_steps: number | null;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          current_step?: string | null;
+          error_message?: string | null;
+          id?: string;
+          input_json?: Json;
+          job_type: string;
+          progress?: number;
+          result_json?: Json | null;
+          started_at?: string | null;
+          status?: string;
+          total_steps?: number | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["processing_jobs"]["Insert"]>;
         Relationships: [];
       };
       flashcard_reviews: {
@@ -300,6 +488,10 @@ export interface Database {
       passages: {
         Row: {
           audio_url: string | null;
+          audio_voice: string | null;
+          audio_duration_seconds: number | null;
+          audio_source: string | null;
+          accent: string | null;
           content: string;
           created_at: string;
           created_by: string | null;
@@ -310,6 +502,7 @@ export interface Database {
           id: string;
           is_published: boolean;
           skill: string | null;
+          speed: string | null;
           title: string;
           topic: string | null;
           transcript: string | null;
@@ -319,6 +512,10 @@ export interface Database {
         };
         Insert: {
           audio_url?: string | null;
+          audio_voice?: string | null;
+          audio_duration_seconds?: number | null;
+          audio_source?: string | null;
+          accent?: string | null;
           content: string;
           created_at?: string;
           created_by?: string | null;
@@ -329,6 +526,7 @@ export interface Database {
           id?: string;
           is_published?: boolean;
           skill?: string | null;
+          speed?: string | null;
           title: string;
           topic?: string | null;
           transcript?: string | null;
@@ -543,6 +741,36 @@ export interface Database {
           writing_score?: number | null;
         };
         Update: Partial<Database["public"]["Tables"]["user_progress_snapshots"]["Insert"]>;
+        Relationships: [];
+      };
+      user_progress_summary: {
+        Row: {
+          b2_readiness_score: number;
+          current_streak: number;
+          listening_accuracy: number;
+          reading_accuracy: number;
+          speaking_avg_score: number | null;
+          total_xp: number;
+          updated_at: string;
+          user_id: string;
+          vocabulary_mastery_pct: number;
+          weak_trap_types: Json;
+          writing_avg_score: number | null;
+        };
+        Insert: {
+          b2_readiness_score?: number;
+          current_streak?: number;
+          listening_accuracy?: number;
+          reading_accuracy?: number;
+          speaking_avg_score?: number | null;
+          total_xp?: number;
+          updated_at?: string;
+          user_id: string;
+          vocabulary_mastery_pct?: number;
+          weak_trap_types?: Json;
+          writing_avg_score?: number | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_progress_summary"]["Insert"]>;
         Relationships: [];
       };
       user_word_bank: {

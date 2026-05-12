@@ -130,7 +130,8 @@ export async function getVocabularyBankWords(userId: string): Promise<Vocabulary
       .select("*")
       .eq("is_published", true)
       .order("frequency_score", { ascending: false })
-      .order("french_word", { ascending: true }),
+      .order("french_word", { ascending: true })
+      .limit(250),
     supabase.from("user_word_bank").select("*").eq("user_id", userId),
   ]);
 

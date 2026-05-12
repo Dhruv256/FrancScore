@@ -27,6 +27,7 @@ export default async function DashboardLayout({
           fullName: getProfileDisplayName(authState.profile, authState.user),
           totalXp: authState.profile.total_xp,
           currentStreak: authState.profile.current_streak,
+          isAdmin: authState.profile.role === "ADMIN",
         }}
       />
       <main className="lg:ml-64 min-h-screen">

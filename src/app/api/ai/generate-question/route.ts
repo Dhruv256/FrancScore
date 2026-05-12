@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/auth";
+import { getAdminAuthErrorResponse, requireAdmin } from "@/lib/auth/admin";
 import {
   buildFallbackGeneratedQuestion,
   buildQuestionGenerationMessages,
@@ -17,12 +17,16 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
-  const { user, profile } = await getAuthContext();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (profile?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  let adminUserId: string;
+  try {
+    const { user } = await requireAdmin();
+    adminUserId = user.id;
+  } catch (error) {
+    const authError = getAdminAuthErrorResponse(error);
+    if (authError) {
+      return NextResponse.json(authError.body, { status: authError.status });
+    }
+    throw error;
   }
 
   const body = await request.json().catch(() => null);
@@ -57,7 +61,7 @@ export async function POST(request: Request) {
 
     let persisted = null;
     if (parsed.data.persist_draft) {
-      persisted = await persistDraft(user.id, draft);
+      persisted = await persistDraft(adminUserId, draft);
     }
 
     return NextResponse.json({

@@ -20,6 +20,7 @@
     "generate:book-material": "tsx scripts/generate-book-learning-material.ts",
     "generate:book-audio": "tsx scripts/generate-book-audio.ts",
     "generate:audio": "tsx scripts/generate-listening-audio.ts",
+    "make-admin": "tsx scripts/make-admin.ts",
     "report:learning": "tsx scripts/report-learning-counts.ts"
   },
   "dependencies": {

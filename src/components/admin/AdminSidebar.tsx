@@ -15,6 +15,7 @@ import {
   ListChecks,
   ArrowLeft,
   Shield,
+  FileText,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
@@ -28,6 +29,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string; style?: 
   Trophy,
   ClipboardList,
   ListChecks,
+  FileText,
 };
 
 const navItems = [
@@ -37,6 +39,8 @@ const navItems = [
   { label: "Vocab Import", href: "/admin/import/vocabulary", icon: "Library" },
   { label: "Passages", href: "/admin/passages", icon: "BookOpen" },
   { label: "French Book", href: "/admin/book", icon: "BookOpen" },
+  { label: "PDF Import", href: "/admin/pdf-import", icon: "FileText" },
+  { label: "Jobs & Logs", href: "/admin/jobs", icon: "ClipboardList" },
   { label: "Writing Prompts", href: "/admin/writing", icon: "PenTool" },
   { label: "Speaking Prompts", href: "/admin/speaking", icon: "Mic" },
   { label: "Listening Audio", href: "/admin/listening", icon: "Headphones" },

@@ -36,7 +36,8 @@ export async function getFlashcardDeck(
     .select("*")
     .eq("is_published", true)
     .order("frequency_score", { ascending: false })
-    .order("french_word", { ascending: true });
+    .order("french_word", { ascending: true })
+    .limit(300);
 
   if (vocabularyError) {
     throw new Error(vocabularyError.message);

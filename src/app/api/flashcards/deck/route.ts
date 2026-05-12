@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/auth";
 import { formatSupabaseError } from "@/lib/errors/supabase-error";
 import { getFlashcardDeck } from "@/lib/flashcards/server";
+import { createRouteTimer } from "@/lib/observability/timing";
 import type { FlashcardDeckFilter } from "@/lib/flashcards/types";
 
 export async function GET(request: Request) {
   const { user } = await getAuthContext();
+  const timer = createRouteTimer("GET /api/flashcards/deck", user?.id);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,8 +24,11 @@ export async function GET(request: Request) {
 
   try {
     const data = await getFlashcardDeck(user.id, filter);
+    timer.step("loaded_flashcard_deck");
+    timer.done({ count: data.cards.length, deckType: filter.deckType });
     return NextResponse.json(data);
   } catch (error) {
+    timer.done({ failed: true });
     const formatted = formatSupabaseError(error, {
       operation: "load flashcard deck",
       table: "public.vocabulary",

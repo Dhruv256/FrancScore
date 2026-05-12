@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getAuthContext } from "@/lib/auth";
+import { getAdminAuthErrorResponse, requireAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const saveSchema = z.object({
@@ -9,12 +9,22 @@ const saveSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const { user, profile } = await getAuthContext();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (profile?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Only admins can publish book items into main practice banks." }, { status: 403 });
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const authError = getAdminAuthErrorResponse(error);
+    if (authError) {
+      return NextResponse.json(
+        {
+          error:
+            authError.status === 403
+              ? "Only admins can publish book items into main practice banks."
+              : authError.body.error,
+        },
+        { status: authError.status },
+      );
+    }
+    throw error;
   }
 
   const body = await request.json().catch(() => null);

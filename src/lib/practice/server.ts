@@ -28,7 +28,8 @@ export async function getPracticeQuestionSet(
     .select("*")
     .eq("skill_type", filters.skill)
     .eq("is_published", true)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .limit(60);
 
   const examTypes = getExamTypeFilterValues(filters.examType);
   if (examTypes) {
@@ -61,17 +62,47 @@ export async function getPracticeQuestionSet(
   );
   const progress = await getPracticeProgress(filters.skill, userId);
 
-  const items = questions
+  const items = suppressRepeatedListeningAudio(
+    questions
     .map((question) =>
       sanitizeQuestion(question, question.passage_id ? passages.get(question.passage_id) ?? null : null),
     )
-    .sort((left, right) => comparePracticeQuestions(left, right, filters.skill));
+    .sort((left, right) => comparePracticeQuestions(left, right, filters.skill)),
+    filters.skill,
+  );
 
   return {
     filters,
     items,
     progress,
   };
+}
+
+function suppressRepeatedListeningAudio(
+  items: PracticeQuestion[],
+  skill: PracticeSkill,
+) {
+  if (skill !== "LISTENING") {
+    return items;
+  }
+
+  const audioCounts = new Map<string, number>();
+  for (const item of items) {
+    if (!item.audioUrl) continue;
+    audioCounts.set(item.audioUrl, (audioCounts.get(item.audioUrl) ?? 0) + 1);
+  }
+
+  return items.map((item) => {
+    if (!item.audioUrl || (audioCounts.get(item.audioUrl) ?? 0) <= 1) {
+      return item;
+    }
+
+    return {
+      ...item,
+      audioUrl: null,
+      tags: [...new Set([...item.tags, "duplicate-audio-hidden"])],
+    };
+  });
 }
 
 export async function submitPracticeAttempt(
