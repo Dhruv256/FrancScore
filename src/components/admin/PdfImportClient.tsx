@@ -27,6 +27,7 @@ export function PdfImportClient({
 }) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("French All-in-One Book");
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +39,7 @@ export function PdfImportClient({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("title", title.trim() || file.name.replace(/\.pdf$/i, ""));
       const response = await fetch("/api/admin/pdf-import/upload", {
         method: "POST",
         body: formData,
@@ -74,7 +76,7 @@ export function PdfImportClient({
           <div className="rounded-[1.5rem] bg-[#111] p-5 text-[#f7f2e8]">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#ff9a3d]">Server-only</p>
             <p className="mt-2 text-sm text-[#d8d0c2]">
-              PDFs go to private Supabase Storage bucket <code>pdf-imports</code>. NVIDIA keys never touch the browser.
+              PDFs go to the configured private Supabase Storage bucket. NVIDIA keys never touch the browser.
             </p>
           </div>
         </div>
@@ -92,6 +94,16 @@ export function PdfImportClient({
       ) : null}
 
       <div className="card-soft rounded-[2rem] p-5">
+        <label className="mb-4 block">
+          <span className="mb-2 block text-sm font-black text-text-primary">Book title</span>
+          <input
+            type="text"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="input"
+            placeholder="Complete French All-in-One"
+          />
+        </label>
         <label className="flex min-h-48 cursor-pointer flex-col items-center justify-center rounded-[1.5rem] border border-dashed border-[rgba(17,17,17,0.16)] bg-white/45 p-6 text-center">
           <UploadCloud className="mb-3 h-10 w-10 text-brand-green" />
           <span className="text-lg font-black text-text-primary">
@@ -113,7 +125,7 @@ export function PdfImportClient({
             className="btn btn-primary"
           >
             {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
-            {isUploading ? "Uploading and extracting..." : "Upload PDF"}
+            {isUploading ? "Importing PDF..." : "Import PDF"}
           </button>
           {error ? <p className="text-sm text-accent-rose">{error}</p> : null}
         </div>

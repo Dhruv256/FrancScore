@@ -41,7 +41,7 @@ function readPdfEnvState() {
     const warnings: string[] = [];
 
     if (!env.PDF_PROCESSING_ENABLED) {
-      warnings.push("PDF processing is disabled. Set PDF_PROCESSING_ENABLED=true.");
+      warnings.push("AI chunk processing is disabled. Upload and text extraction can run, but set PDF_PROCESSING_ENABLED=true before processing chunks with AI.");
     }
 
     if (!env.NVIDIA_API_KEY && !env.NVIDIA_MAIN_API_KEY) {
@@ -52,7 +52,7 @@ function readPdfEnvState() {
       warnings.push("NVIDIA PDF processing model is not configured.");
     }
 
-    return { enabled: env.PDF_PROCESSING_ENABLED, warnings };
+    return { enabled: true, warnings };
   } catch (error) {
     return {
       enabled: false,

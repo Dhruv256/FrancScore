@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
+import { generateDailyVocabularyBatch } from "@/lib/ai/generate-daily-vocab";
 import { getAdminAuthErrorResponse, requireAdmin } from "@/lib/auth/admin";
 import { getDailyVocabReadiness } from "@/lib/features/feature-flags";
-import { createProcessingJob } from "@/lib/jobs/server";
 import { createRouteTimer } from "@/lib/observability/timing";
 import { isMissingDatabaseMigrationError } from "@/lib/supabase/schema-errors";
 
@@ -23,23 +23,19 @@ export async function POST() {
       );
     }
 
-    const job = await createProcessingJob({
-      userId: user.id,
-      jobType: "daily_vocab_generation",
-      inputJson: {
-        requested_count: readiness.requestedCount,
-        generation_date: new Date().toISOString().slice(0, 10),
-      },
-      totalSteps: 1,
-      currentStep: "Queued daily vocabulary generation",
-    });
-    timer.step("job_created");
-    timer.done({ job_id: job.id });
+    const summary = await generateDailyVocabularyBatch({ userId: user.id });
+    timer.step("generated_daily_vocabulary");
+    timer.done({ inserted_count: summary.insertedCount });
     return NextResponse.json({
       ok: true,
-      jobId: job.id,
-      status: job.status,
-      progress: job.progress,
+      batch_id: summary.batchId,
+      requested_count: summary.requestedCount,
+      generated_count: summary.generatedCount,
+      inserted_count: summary.insertedCount,
+      duplicate_count: summary.skippedDuplicateCount,
+      failed_count: summary.failedCount,
+      preview: summary.insertedPreview,
+      message: summary.message,
     });
   } catch (error) {
     const authError = getAdminAuthErrorResponse(error);

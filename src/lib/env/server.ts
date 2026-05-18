@@ -21,7 +21,7 @@ const serverEnvSchema = z
     NVIDIA_API_KEY: optionalStringSchema,
     NVIDIA_API_BASE_URL: z
       .url("NVIDIA_API_BASE_URL must be a valid URL.")
-      .default("https://integrate.api.nvidia.com"),
+      .default("https://integrate.api.nvidia.com/v1"),
     NVIDIA_AI_TIMEOUT_MS: z.coerce.number().int().positive().max(120000).default(45000),
     NVIDIA_MAIN_MODEL: nvidiaModelIdSchema.default("meta/llama-3.1-70b-instruct"),
     NVIDIA_IMPORT_CLEANUP_MODEL: nvidiaModelIdSchema.optional(),
@@ -73,7 +73,7 @@ const serverEnvSchema = z
     SUPABASE_LISTENING_AUDIO_BUCKET: z.string().min(1).default("listening-audio"),
     SUPABASE_SPEAKING_AUDIO_BUCKET: z.string().min(1).default("speaking-audio"),
     SUPABASE_USER_UPLOADS_BUCKET: z.string().min(1).default("user-uploads"),
-    SUPABASE_PDF_IMPORTS_BUCKET: z.string().min(1).default("pdf-imports"),
+    SUPABASE_PDF_IMPORTS_BUCKET: z.string().min(1).default("study-sources"),
 
     SESSION_SECRET: optionalStringSchema,
     CRON_SECRET: optionalStringSchema,

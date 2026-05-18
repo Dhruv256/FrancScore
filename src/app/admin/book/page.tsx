@@ -33,7 +33,7 @@ export default async function AdminBookPage() {
         <div className="card p-5">
           <h2 className="text-lg font-black">No book imported yet.</h2>
           <p className="mt-2 text-sm text-text-secondary">
-            Book import is not available in the product UI yet. This module will be rebuilt before the next import.
+            Use Admin PDF Import to upload a PDF. Once imported, chapters, pages, chunks, notes, and generated items will appear here.
           </p>
         </div>
       ) : (

@@ -46,6 +46,83 @@ export async function safeListPdfImportBatches() {
   }
 }
 
+export async function getPdfImportStatus() {
+  // Book tables are currently not part of generated Supabase types.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any;
+  const { data: source, error: sourceError } = await supabase
+    .from("book_sources")
+    .select("*")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (sourceError) {
+    throwPdfImportError(sourceError, "book_sources", "Unable to load latest book source.");
+  }
+
+  const { data: batch, error: batchError } = await supabase
+    .from("pdf_import_batches")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (batchError) {
+    throwPdfImportError(batchError, "pdf_import_batches", "Unable to load latest PDF import batch.");
+  }
+
+  if (!source) {
+    return {
+      source: null,
+      batch: batch ?? null,
+      counts: {
+        pages: 0,
+        chapters: 0,
+        chunks: 0,
+        reports: 0,
+      },
+      report: null,
+    };
+  }
+
+  const [pages, chapters, chunks, reports] = await Promise.all([
+    supabase.from("book_pages").select("id", { count: "exact", head: true }).eq("book_source_id", source.id),
+    supabase.from("book_chapters").select("id", { count: "exact", head: true }).eq("book_source_id", source.id),
+    supabase.from("book_chunks").select("id", { count: "exact", head: true }).eq("book_source_id", source.id),
+    supabase
+      .from("book_import_reports")
+      .select("*", { count: "exact" })
+      .eq("book_source_id", source.id)
+      .order("created_at", { ascending: false })
+      .limit(1),
+  ]);
+
+  for (const [result, table, fallback] of [
+    [pages, "book_pages", "Unable to count book pages."],
+    [chapters, "book_chapters", "Unable to count book chapters."],
+    [chunks, "book_chunks", "Unable to count book chunks."],
+    [reports, "book_import_reports", "Unable to load import report."],
+  ] as const) {
+    if (result.error) {
+      throwPdfImportError(result.error, table, fallback);
+    }
+  }
+
+  return {
+    source,
+    batch: batch ?? null,
+    counts: {
+      pages: pages.count ?? 0,
+      chapters: chapters.count ?? 0,
+      chunks: chunks.count ?? 0,
+      reports: reports.count ?? 0,
+    },
+    report: reports.data?.[0] ?? null,
+  };
+}
+
 export async function getPdfImportBatchDetail(batchId: string) {
   const supabase = createAdminClient();
   const [batchResult, chunksResult, itemsResult] = await Promise.all([
@@ -74,6 +151,7 @@ export async function getPdfImportBatchDetail(batchId: string) {
 export async function createPdfImportBatch(input: {
   userId: string;
   file: File;
+  title?: string;
 }) {
   const env = getServerEnv();
 
@@ -85,12 +163,14 @@ export async function createPdfImportBatch(input: {
   const batchId = crypto.randomUUID();
   const safeFileName = input.file.name.replace(/[^\w.\- ]+/g, "").replace(/\s+/g, "-");
   const storagePath = `${batchId}/${safeFileName || "import.pdf"}`;
+  const title = input.title?.trim() || input.file.name.replace(/\.pdf$/i, "") || "Imported French PDF";
 
   await createBatch(supabase, {
     id: batchId,
     uploaded_by: input.userId,
     file_name: input.file.name,
     storage_path: storagePath,
+    title,
     status: "pending",
   });
 
@@ -135,9 +215,21 @@ export async function createPdfImportBatch(input: {
 
     if (chunkError) throw new Error(chunkError.message);
 
+    const bookReport = await createBookStudySourceFromPdf({
+      supabase,
+      title,
+      fileName: input.file.name,
+      storagePath,
+      totalPages,
+      pages,
+      chunks,
+      batchId,
+    });
+
     await updateBatch(supabase, batchId, {
       status: "ready_for_review",
       total_chunks: chunks.length,
+      chapters_detected: bookReport.chaptersDetected,
       completed_at: new Date().toISOString(),
     });
 
@@ -409,6 +501,219 @@ function chunkPdfPages(
   }
 
   return chunks;
+}
+
+async function createBookStudySourceFromPdf(input: {
+  supabase: SupabaseAdmin;
+  title: string;
+  fileName: string;
+  storagePath: string;
+  totalPages: number;
+  pages: Array<{ pageNumber: number; text: string }>;
+  chunks: Array<{
+    chunkIndex: number;
+    pageStart: number;
+    pageEnd: number;
+    rawText: string;
+  }>;
+  batchId: string;
+}) {
+  // Book tables were added after the generated Supabase types in this repo.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = input.supabase as any;
+  const title = input.title.trim() || "Imported French PDF";
+
+  await supabase
+    .from("book_sources")
+    .update({ is_active: false })
+    .eq("title", title)
+    .eq("is_active", true);
+
+  const { data: source, error: sourceError } = await supabase
+    .from("book_sources")
+    .insert({
+      title,
+      source_type: "pdf",
+      file_name: input.fileName,
+      storage_path: input.storagePath,
+      total_pages: input.totalPages,
+      is_internal: true,
+      is_active: true,
+    })
+    .select("id")
+    .single();
+
+  if (sourceError || !source) {
+    throwPdfImportError(sourceError, "book_sources", "Unable to create book source.");
+  }
+
+  const chapterCandidates = detectBookChapters(input.pages, title);
+  const { data: chapters, error: chaptersError } = await supabase
+    .from("book_chapters")
+    .insert(
+      chapterCandidates.map((chapter, index) => ({
+        book_source_id: source.id,
+        chapter_number: index + 1,
+        title: chapter.title,
+        start_page: chapter.startPage,
+        end_page: chapter.endPage,
+        section_type: "lesson",
+        cefr_level: "B1",
+        skill_focus: inferSkillFocus(chapter.title),
+        order_index: index + 1,
+      })),
+    )
+    .select("id,title,start_page,end_page,order_index");
+
+  if (chaptersError || !chapters?.length) {
+    throwPdfImportError(chaptersError, "book_chapters", "Unable to create book chapters.");
+  }
+
+  const chapterForPage = (pageNumber: number) =>
+    chapters.find(
+      (chapter: { start_page: number | null; end_page: number | null }) =>
+        pageNumber >= (chapter.start_page ?? 1) && pageNumber <= (chapter.end_page ?? input.totalPages),
+    ) ?? chapters[0];
+
+  const { error: pagesError } = await supabase.from("book_pages").insert(
+    input.pages.map((page) => ({
+      book_source_id: source.id,
+      chapter_id: chapterForPage(page.pageNumber)?.id ?? null,
+      page_number: page.pageNumber,
+      raw_text: page.text,
+      cleaned_text: page.text,
+      page_type: page.text ? "content" : "blank",
+    })),
+  );
+
+  if (pagesError) {
+    throwPdfImportError(pagesError, "book_pages", "Unable to create book pages.");
+  }
+
+  const { data: bookChunks, error: chunksError } = await supabase
+    .from("book_chunks")
+    .insert(
+      input.chunks.map((chunk) => ({
+        book_source_id: source.id,
+        chapter_id: chapterForPage(chunk.pageStart)?.id ?? null,
+        page_start: chunk.pageStart,
+        page_end: chunk.pageEnd,
+        chunk_index: chunk.chunkIndex,
+        chunk_text: chunk.rawText,
+        chunk_type: "lesson",
+        headings: extractHeadings(chunk.rawText),
+        metadata: {
+          pdf_import_batch_id: input.batchId,
+        },
+      })),
+    )
+    .select("id");
+
+  if (chunksError) {
+    throwPdfImportError(chunksError, "book_chunks", "Unable to create book chunks.");
+  }
+
+  const report = {
+    batch_id: input.batchId,
+    source_id: source.id,
+    title,
+    file_name: input.fileName,
+    total_pages: input.totalPages,
+    chapters_detected: chapters.length,
+    chunks_created: bookChunks?.length ?? input.chunks.length,
+    imported_at: new Date().toISOString(),
+  };
+
+  const { error: reportError } = await supabase.from("book_import_reports").insert({
+    book_source_id: source.id,
+    report_json: report,
+  });
+
+  if (reportError) {
+    throwPdfImportError(reportError, "book_import_reports", "Unable to save book import report.");
+  }
+
+  return {
+    sourceId: source.id as string,
+    chaptersDetected: chapters.length,
+    chunksCreated: bookChunks?.length ?? input.chunks.length,
+    report,
+  };
+}
+
+function detectBookChapters(
+  pages: Array<{ pageNumber: number; text: string }>,
+  title: string,
+) {
+  const chapters: Array<{ title: string; startPage: number; endPage: number }> = [];
+  const chapterPattern =
+    /^(chapter|chapitre|part|partie|unit|lesson|le[cç]on)\b[:.\s-]*(.+)?$/i;
+  const numberedHeadingPattern = /^\d{1,2}[.)]\s+[A-ZÀ-Ÿ][\wÀ-ÿ ',;:!?-]{4,90}$/;
+
+  for (const page of pages) {
+    const lines = page.text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length >= 4 && line.length <= 110)
+      .slice(0, 12);
+    const heading = lines.find((line) => chapterPattern.test(line) || numberedHeadingPattern.test(line));
+    if (!heading) continue;
+
+    const previous = chapters.at(-1);
+    if (previous && previous.startPage === page.pageNumber) continue;
+    if (previous) previous.endPage = Math.max(previous.startPage, page.pageNumber - 1);
+    chapters.push({
+      title: normalizeChapterTitle(heading),
+      startPage: page.pageNumber,
+      endPage: pages.at(-1)?.pageNumber ?? page.pageNumber,
+    });
+
+    if (chapters.length >= 80) break;
+  }
+
+  if (!chapters.length) {
+    return [
+      {
+        title: title || "Imported PDF",
+        startPage: pages[0]?.pageNumber ?? 1,
+        endPage: pages.at(-1)?.pageNumber ?? 1,
+      },
+    ];
+  }
+
+  return chapters;
+}
+
+function normalizeChapterTitle(value: string) {
+  return value.replace(/\s+/g, " ").replace(/^\d+[.)]\s*/, "").trim();
+}
+
+function inferSkillFocus(title: string) {
+  const lower = title.toLowerCase();
+  const focus = new Set<string>(["reading"]);
+  if (/grammar|verb|tense|pronoun|article|adjective|adverb|preposition|subjunctive|conditional/i.test(lower)) {
+    focus.add("grammar");
+  }
+  if (/vocab|word|phrase|expression|connector|conversation/i.test(lower)) {
+    focus.add("vocabulary");
+  }
+  if (/conversation|speaking|oral|dialogue/i.test(lower)) {
+    focus.add("speaking");
+    focus.add("listening");
+  }
+  if (/written|writing|letter|email|correspondence/i.test(lower)) {
+    focus.add("writing");
+  }
+  return [...focus];
+}
+
+function extractHeadings(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length >= 4 && line.length <= 90)
+    .filter((line) => /^[A-ZÀ-Ÿ0-9][A-ZÀ-Ÿa-zà-ÿ0-9 ',;:!?-]+$/.test(line))
+    .slice(0, 6);
 }
 
 function mapAiItemToImportRow(batchId: string, chunkId: string, item: PdfChunkAiItem) {

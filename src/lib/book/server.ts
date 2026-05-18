@@ -214,7 +214,9 @@ async function getActiveBookSource(supabase: UntypedSupabase, sourceId?: string)
     .eq("is_active", true)
     .eq("is_internal", true);
 
-  query = sourceId ? query.eq("id", sourceId) : query.eq("title", "Complete French All-in-One");
+  query = sourceId
+    ? query.eq("id", sourceId)
+    : query.order("created_at", { ascending: false }).limit(1);
   const { data, error } = await query.maybeSingle();
 
   if (error) {

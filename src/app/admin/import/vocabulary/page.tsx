@@ -98,7 +98,10 @@ export default async function AdminVocabularyImportPage() {
         </>
       ) : (
         <div className="card p-5 text-sm text-text-secondary">
-          No import batch has been recorded yet. Use Admin Vocabulary for daily AI generation, or return here after an Excel import batch exists.
+          <p className="font-black text-text-primary">Excel import has not been run yet.</p>
+          <p className="mt-2">
+            Upload UI is not available yet. Use Admin Vocabulary for AI generation, or run the import script locally.
+          </p>
         </div>
       )}
     </div>

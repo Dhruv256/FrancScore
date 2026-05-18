@@ -16,8 +16,10 @@ export async function POST(request: Request) {
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "Upload a PDF file." }, { status: 400 });
     }
+    const titleValue = formData.get("title");
+    const title = typeof titleValue === "string" ? titleValue.trim() : "";
 
-    const batchId = await createPdfImportBatch({ userId: user.id, file });
+    const batchId = await createPdfImportBatch({ userId: user.id, file, title });
     return NextResponse.json({ batchId });
   } catch (error) {
     const authError = getAdminAuthErrorResponse(error);

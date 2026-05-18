@@ -51,6 +51,12 @@ type GenerateRoutePayload = {
   code?: string;
   message?: string;
   error?: string;
+  requested_count?: number;
+  generated_count?: number;
+  inserted_count?: number;
+  duplicate_count?: number;
+  failed_count?: number;
+  preview?: GenerationPreviewItem[];
 };
 
 type JobResultSummary = {
@@ -141,8 +147,30 @@ export function GenerateDailyVocabButton({
       });
       const payload = (await response.json()) as GenerateRoutePayload;
 
-      if (!response.ok || !payload.jobId) {
+      if (!response.ok) {
         throw new Error(payload.message ?? payload.error ?? "Unable to queue vocabulary generation.");
+      }
+
+      if (!payload.jobId) {
+        const insertedCount = payload.inserted_count ?? 0;
+        setPreview(payload.preview ?? []);
+        setMessage(payload.message ?? `${insertedCount} words saved to Flashcards.`);
+        setJob({
+          id: "direct-generation",
+          status: "completed",
+          progress: 100,
+          current_step: "Completed",
+          result_json: {
+            requestedCount: payload.requested_count,
+            generatedCount: payload.generated_count,
+            insertedCount,
+            skippedDuplicateCount: payload.duplicate_count,
+            failedCount: payload.failed_count,
+            insertedPreview: payload.preview ?? [],
+          },
+          error_message: null,
+        });
+        return;
       }
 
       const queuedJob: ProcessingJob = {
@@ -202,7 +230,9 @@ export function GenerateDailyVocabButton({
           </p>
           <h2 className="text-xl font-black text-text-primary">Generate Today&apos;s 50 Words</h2>
           <p className="mt-1 text-sm text-text-secondary">
-            Saves {requestedCount} published TEF/TCF flashcards into the live vocabulary bank.
+            {enabled
+              ? `Ready to generate ${requestedCount} TEF/TCF flashcards.`
+              : "Daily AI vocabulary generation is not ready on this server."}
           </p>
           <StatusPill label={statusLabel} enabled={enabled} />
         </div>

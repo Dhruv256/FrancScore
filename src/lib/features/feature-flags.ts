@@ -6,8 +6,7 @@ import { getServerEnv } from "@/lib/env/server";
 export const PDF_BOOK_FEATURE_DISABLED_RESPONSE = {
   ok: false,
   code: "PDF_BOOK_FEATURE_DISABLED",
-  message:
-    "PDF Book Import is temporarily disabled. This feature will be rebuilt and imported from scratch later.",
+  message: "PDF Book Import is disabled on this server.",
 } as const;
 
 export function isPdfBookFeatureEnabled() {
@@ -29,7 +28,7 @@ export function getDailyVocabReadiness() {
     return {
       enabled: false,
       code: "AI_VOCAB_GENERATION_DISABLED",
-      message: "Daily AI vocabulary generation is disabled on this server.",
+      message: "AI_VOCAB_GENERATION_ENABLED is not set to true on the server.",
       requestedCount: env.DAILY_AI_VOCAB_COUNT,
       model: env.NVIDIA_MAIN_MODEL,
     } as const;
@@ -48,7 +47,7 @@ export function getDailyVocabReadiness() {
   return {
     enabled: true,
     code: "READY",
-    message: "Daily AI vocabulary generation is ready.",
+    message: `Ready to generate ${env.DAILY_AI_VOCAB_COUNT} TEF/TCF flashcards.`,
     requestedCount: env.DAILY_AI_VOCAB_COUNT,
     model: env.NVIDIA_MAIN_MODEL,
   } as const;
