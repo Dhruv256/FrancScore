@@ -61,6 +61,7 @@ type SidebarProps = {
     totalXp: number;
     currentStreak: number;
     isAdmin: boolean;
+    pdfBookFeatureEnabled: boolean;
   };
 };
 
@@ -173,7 +174,12 @@ export function Sidebar({ userSummary }: SidebarProps) {
 
         {/* Nav items */}
         <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
-          {navItems.map((item) => {
+          {navItems
+            .filter(
+              (item) =>
+                item.href !== "/book" || userSummary.pdfBookFeatureEnabled,
+            )
+            .map((item) => {
             const Icon = iconMap[item.icon];
             const isActive =
               pathname === item.href ||

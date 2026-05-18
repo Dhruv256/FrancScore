@@ -48,10 +48,12 @@ export function PdfImportReviewClient({
   batch,
   chunks,
   items,
+  setupError,
 }: {
   batch: Batch;
   chunks: Chunk[];
   items: Item[];
+  setupError?: string | null;
 }) {
   const router = useRouter();
   const [busyAction, setBusyAction] = useState<string | null>(null);
@@ -119,11 +121,17 @@ export function PdfImportReviewClient({
       </div>
 
       <div className="card-soft rounded-[2rem] p-5">
+        {setupError ? (
+          <div className="mb-4 rounded-2xl border border-accent-amber/30 bg-accent-amber/10 p-4 text-sm text-accent-amber">
+            <p className="font-black text-text-primary">PDF import setup needed</p>
+            <p className="mt-1">{setupError}</p>
+          </div>
+        ) : null}
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => void runAction({ action: "process_next" }, "process_next")}
-            disabled={Boolean(busyAction)}
+            disabled={Boolean(busyAction) || Boolean(setupError)}
             className="btn btn-primary"
           >
             {busyAction === "process_next" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -132,7 +140,7 @@ export function PdfImportReviewClient({
           <button
             type="button"
             onClick={() => void runAction({ action: "approve_high_confidence" }, "approve_high_confidence")}
-            disabled={Boolean(busyAction)}
+            disabled={Boolean(busyAction) || Boolean(setupError)}
             className="btn btn-secondary"
           >
             <Check className="h-4 w-4" />
@@ -141,7 +149,7 @@ export function PdfImportReviewClient({
           <button
             type="button"
             onClick={() => void runAction({ action: "import_approved" }, "import_approved")}
-            disabled={Boolean(busyAction)}
+            disabled={Boolean(busyAction) || Boolean(setupError)}
             className="btn btn-secondary"
           >
             <Download className="h-4 w-4" />

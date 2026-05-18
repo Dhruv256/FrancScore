@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { getProfileDisplayName } from "@/lib/auth";
 import { resolveAuthState } from "@/lib/auth/resolve-auth-state";
+import { isPdfBookFeatureEnabled } from "@/lib/features";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export default async function DashboardLayout({
           totalXp: authState.profile.total_xp,
           currentStreak: authState.profile.current_streak,
           isAdmin: authState.profile.role === "ADMIN",
+          pdfBookFeatureEnabled: isPdfBookFeatureEnabled(),
         }}
       />
       <main className="lg:ml-64 min-h-screen">

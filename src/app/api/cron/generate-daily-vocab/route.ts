@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateDailyVocabularyBatch } from "@/lib/ai/generate-daily-vocab";
 import { getServerEnv } from "@/lib/env/server";
+import { getDailyVocabReadiness } from "@/lib/features/feature-flags";
 
 export async function GET(request: Request) {
   const env = getServerEnv();
@@ -12,6 +13,18 @@ export async function GET(request: Request) {
   const authorization = request.headers.get("authorization");
   if (authorization !== `Bearer ${env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized cron request." }, { status: 401 });
+  }
+
+  const readiness = getDailyVocabReadiness();
+  if (!readiness.enabled) {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: readiness.code,
+        message: readiness.message,
+      },
+      { status: 400 },
+    );
   }
 
   try {

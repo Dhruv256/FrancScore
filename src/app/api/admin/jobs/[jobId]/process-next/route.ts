@@ -9,7 +9,7 @@ type RouteContext = {
 };
 
 export async function POST(_request: Request, context: RouteContext) {
-  const timer = createRouteTimer("POST /api/jobs/[jobId]/process-next");
+  const timer = createRouteTimer("POST /api/admin/jobs/[jobId]/process-next");
 
   try {
     await requireAdmin();

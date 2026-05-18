@@ -1,7 +1,20 @@
+import { FeatureDisabled } from "@/components/FeatureDisabled";
+import { isPdfBookFeatureEnabled } from "@/lib/features";
 import { BookOpen, FileText, Headphones, Layers, NotebookTabs } from "lucide-react";
 import { getBookAdminStatus } from "@/lib/book/server";
 
 export default async function AdminBookPage() {
+  if (!isPdfBookFeatureEnabled()) {
+    return (
+      <FeatureDisabled
+        href="/admin"
+        cta="Return to admin"
+        title="French All-in-One Book is temporarily disabled"
+        description="The imported book data is being cleared and this module will be rebuilt before the next import."
+      />
+    );
+  }
+
   const status = await getBookAdminStatus();
 
   return (
@@ -20,7 +33,7 @@ export default async function AdminBookPage() {
         <div className="card p-5">
           <h2 className="text-lg font-black">No book imported yet.</h2>
           <p className="mt-2 text-sm text-text-secondary">
-            Apply the migration, then run <code>npm run import:book</code> from the project root.
+            Book import is not available in the product UI yet. This module will be rebuilt before the next import.
           </p>
         </div>
       ) : (
@@ -32,16 +45,6 @@ export default async function AdminBookPage() {
             <Metric label="Notes" value={status.notes} icon={NotebookTabs} />
             <Metric label="Generated items" value={status.generatedItems} icon={Layers} />
             <Metric label="Missing audio" value={status.listeningScriptsMissingAudio} icon={Headphones} />
-          </div>
-
-          <div className="card p-5">
-            <h2 className="mb-3 text-base font-semibold">Script commands</h2>
-            <div className="grid gap-3 text-sm text-text-secondary md:grid-cols-2">
-              <Instruction title="Import PDF" command="npm run import:book" />
-              <Instruction title="Generate one chapter" command="npm run generate:book-material -- --chapter 1" />
-              <Instruction title="Generate all chapters" command="npm run generate:book-material -- --all" />
-              <Instruction title="Generate book audio" command="npm run generate:book-audio" />
-            </div>
           </div>
 
           <div className="card p-5">
@@ -82,17 +85,6 @@ function Metric({
           <div className="text-xs text-text-muted">{label}</div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Instruction({ title, command }: { title: string; command: string }) {
-  return (
-    <div className="rounded-2xl border border-border-default bg-bg-input p-4">
-      <div className="font-black text-text-primary">{title}</div>
-      <p className="mt-1">
-        <code>{command}</code>
-      </p>
     </div>
   );
 }

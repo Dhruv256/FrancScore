@@ -41,10 +41,9 @@ export default async function AdminVocabularyImportPage() {
       </div>
 
       <div className="card p-5">
-        <h2 className="text-base font-black">How to run</h2>
+        <h2 className="text-base font-black">Import status</h2>
         <p className="mt-2 text-sm text-text-secondary">
-          Preview first with <code>npm run import:vocab -- --file=..\French_schedule.xlsx --dry-run</code>.
-          Then import with <code>npm run import:vocab -- --file=..\French_schedule.xlsx</code>.
+          Use this page to review smart Excel cleanup results. The upload workflow will be brought into the app UI; script commands stay out of product cards.
         </p>
       </div>
 
@@ -99,7 +98,7 @@ export default async function AdminVocabularyImportPage() {
         </>
       ) : (
         <div className="card p-5 text-sm text-text-secondary">
-          No import batch has been recorded yet. Run the new smart import script after applying the migration.
+          No import batch has been recorded yet. Use Admin Vocabulary for daily AI generation, or return here after an Excel import batch exists.
         </div>
       )}
     </div>

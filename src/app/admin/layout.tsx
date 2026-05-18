@@ -1,5 +1,6 @@
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { requireAdminOrRedirect } from "@/lib/auth/admin";
+import { isPdfBookFeatureEnabled } from "@/lib/features";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-bg-primary">
-      <AdminSidebar />
+      <AdminSidebar pdfBookFeatureEnabled={isPdfBookFeatureEnabled()} />
       <main className="lg:ml-64 min-h-screen">
         <div className="p-6 lg:p-8 max-w-7xl mx-auto">{children}</div>
       </main>

@@ -49,7 +49,11 @@ const navItems = [
   { label: "Mock Tests", href: "/admin/mocks", icon: "ClipboardList" },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({
+  pdfBookFeatureEnabled,
+}: {
+  pdfBookFeatureEnabled: boolean;
+}) {
   const pathname = usePathname();
 
   return (
@@ -65,7 +69,13 @@ export function AdminSidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-        {navItems.map((item) => {
+        {navItems
+          .filter((item) =>
+            pdfBookFeatureEnabled
+              ? true
+              : item.href !== "/admin/book" && item.href !== "/admin/pdf-import",
+          )
+          .map((item) => {
           const Icon = iconMap[item.icon];
           const isActive = pathname === item.href;
           return (

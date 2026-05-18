@@ -11,8 +11,7 @@ export function BookEmptyState() {
         No book imported yet.
       </h1>
       <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-text-secondary">
-        Run <code>npm run db:run -- supabase/migrations/20260509000100_add_french_all_in_one_book.sql</code>,
-        then <code>npm run import:book</code>. The PDF stays private to this internal Supabase-backed app.
+        The book import workflow is disabled while it is rebuilt. The PDF will be imported again from scratch when the module is ready.
       </p>
     </div>
   );

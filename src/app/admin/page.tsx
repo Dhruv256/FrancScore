@@ -10,6 +10,7 @@ import {
   PenTool,
   Shield,
 } from "lucide-react";
+import { isPdfBookFeatureEnabled } from "@/lib/features";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const adminStats = [
@@ -25,7 +26,9 @@ const adminStats = [
 ];
 
 export default async function AdminOverviewPage() {
-  const counts = await getAdminCounts();
+  const pdfBookEnabled = isPdfBookFeatureEnabled();
+  const visibleStats = adminStats.filter((stat) => pdfBookEnabled || stat.href !== "/admin/book");
+  const counts = await getAdminCounts(visibleStats);
 
   return (
     <div className="space-y-6">
@@ -40,7 +43,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {adminStats.map((stat) => {
+        {visibleStats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Link key={stat.label} href={stat.href} className="card group">
@@ -59,25 +62,21 @@ export default async function AdminOverviewPage() {
       </div>
 
       <div className="card p-5">
-        <h2 className="mb-3 text-base font-semibold">Import and audio pipeline</h2>
+        <h2 className="mb-3 text-base font-semibold">Import and generation status</h2>
         <div className="grid gap-3 text-sm text-text-secondary md:grid-cols-2">
           <div className="rounded-2xl border border-border-default bg-bg-input p-4">
             <div className="font-black text-text-primary">Vocabulary import</div>
-            <p className="mt-1">
-              Run <code>npm run import:vocab -- --file=../French_schedule.xlsx</code> from the project root.
-            </p>
+            <p className="mt-1">Use the vocabulary import area for Excel cleanup review.</p>
           </div>
-          <div className="rounded-2xl border border-border-default bg-bg-input p-4">
-            <div className="font-black text-text-primary">French All-in-One Book</div>
-            <p className="mt-1">
-              Run <code>npm run import:book</code>, then <code>npm run generate:book-material -- --chapter 1</code>.
-            </p>
-          </div>
+          {pdfBookEnabled ? (
+            <div className="rounded-2xl border border-border-default bg-bg-input p-4">
+              <div className="font-black text-text-primary">French All-in-One Book</div>
+              <p className="mt-1">Book import is available from the admin book module.</p>
+            </div>
+          ) : null}
           <div className="rounded-2xl border border-border-default bg-bg-input p-4">
             <div className="font-black text-text-primary">Listening audio</div>
-            <p className="mt-1">
-              Run <code>npm run generate:audio</code> after applying the learning upgrade seed.
-            </p>
+            <p className="mt-1">Manage listening scripts and uploaded audio from the listening admin area.</p>
           </div>
         </div>
       </div>
@@ -85,10 +84,10 @@ export default async function AdminOverviewPage() {
   );
 }
 
-async function getAdminCounts() {
+async function getAdminCounts(stats = adminStats) {
   const supabase = createAdminClient();
   const entries = await Promise.all(
-    adminStats.map(async (stat) => {
+    stats.map(async (stat) => {
       let query = supabase
         .from(stat.table)
         .select("id", { count: "exact", head: true });

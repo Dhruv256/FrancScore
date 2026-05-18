@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminAuthErrorResponse, requireAdmin } from "@/lib/auth/admin";
+import { isPdfBookFeatureEnabled, pdfBookFeatureDisabledJson } from "@/lib/features/feature-flags";
 import { createRouteTimer } from "@/lib/observability/timing";
 import {
   approveHighConfidencePdfImportItems,
@@ -9,12 +10,17 @@ import {
   updatePdfImportItem,
 } from "@/lib/pdf-import/server";
 import type { Json } from "@/lib/supabase/database.types";
+import { isMissingDatabaseMigrationError } from "@/lib/supabase/schema-errors";
 
 type RouteContext = {
   params: Promise<{ batchId: string }>;
 };
 
 export async function POST(request: Request, context: RouteContext) {
+  if (!isPdfBookFeatureEnabled()) {
+    return pdfBookFeatureDisabledJson();
+  }
+
   const timer = createRouteTimer("POST /api/admin/pdf-import/[batchId]");
   const { batchId } = await context.params;
 
@@ -71,6 +77,10 @@ export async function POST(request: Request, context: RouteContext) {
     const authError = getAdminAuthErrorResponse(error);
     if (authError) {
       return NextResponse.json(authError.body, { status: authError.status });
+    }
+
+    if (isMissingDatabaseMigrationError(error)) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     timer.done({ batch_id: batchId, failed: true });

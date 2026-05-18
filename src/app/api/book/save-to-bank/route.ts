@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminAuthErrorResponse, requireAdmin } from "@/lib/auth/admin";
+import { isPdfBookFeatureEnabled, pdfBookFeatureDisabledJson } from "@/lib/features/feature-flags";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const saveSchema = z.object({
@@ -9,6 +10,10 @@ const saveSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (!isPdfBookFeatureEnabled()) {
+    return pdfBookFeatureDisabledJson();
+  }
+
   try {
     await requireAdmin();
   } catch (error) {

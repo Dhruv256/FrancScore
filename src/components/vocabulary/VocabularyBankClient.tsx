@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowRight, Layers, Library, Search, Sparkles } from "lucide-react";
-import { GenerateDailyVocabButton } from "@/components/admin/GenerateDailyVocabButton";
 import { CEFR_LEVELS, VOCAB_TOPICS } from "@/lib/constants";
 import type { CEFRLevel, TopicType, VocabStatus, VocabularyWord } from "@/lib/types";
 import { formatCEFRLevel, formatTopicType, formatVocabularyStatus } from "@/lib/utils";
@@ -83,12 +82,15 @@ export function VocabularyBankClient({
       </div>
 
       {isAdmin ? (
-        <div className="rounded-[2rem] border border-[rgba(17,17,17,0.08)] bg-[#fff8ed]/80 p-1">
-          <GenerateDailyVocabButton />
-          <p className="px-5 pb-4 pt-1 text-xs text-text-muted">
+        <div className="rounded-[2rem] border border-[rgba(17,17,17,0.08)] bg-[#fff8ed]/80 p-5">
+          <p className="text-sm font-black text-text-primary">Admin daily vocabulary</p>
+          <p className="mt-1 text-xs text-text-muted">
             <Sparkles className="mr-1 inline h-3.5 w-3.5 text-brand-green" />
-            Admin-only CTA. Generated rows are published only after validation and duplicate checks.
+            Generate today&apos;s 50 AI words from the dedicated Admin Vocabulary workflow.
           </p>
+          <Link href="/admin/vocabulary" className="btn btn-primary btn-sm mt-4">
+            Open Admin Vocabulary
+          </Link>
         </div>
       ) : null}
 

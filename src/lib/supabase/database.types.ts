@@ -184,6 +184,7 @@ export interface Database {
           generation_date: string;
           id: string;
           inserted_count: number;
+          job_id: string | null;
           model_used: string | null;
           requested_count: number;
           skipped_duplicate_count: number;
@@ -197,6 +198,7 @@ export interface Database {
           generation_date: string;
           id?: string;
           inserted_count?: number;
+          job_id?: string | null;
           model_used?: string | null;
           requested_count?: number;
           skipped_duplicate_count?: number;
@@ -243,12 +245,15 @@ export interface Database {
           created_at: string;
           error_message: string | null;
           file_name: string;
+          chapters_detected: number;
           id: string;
           model_used: string | null;
           status: string;
           storage_path: string | null;
+          title: string | null;
           total_chunks: number;
           total_pages: number;
+          updated_at: string;
           uploaded_by: string | null;
         };
         Insert: {
@@ -256,12 +261,15 @@ export interface Database {
           created_at?: string;
           error_message?: string | null;
           file_name: string;
+          chapters_detected?: number;
           id?: string;
           model_used?: string | null;
           status?: string;
           storage_path?: string | null;
+          title?: string | null;
           total_chunks?: number;
           total_pages?: number;
+          updated_at?: string;
           uploaded_by?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["pdf_import_batches"]["Insert"]>;
@@ -274,6 +282,7 @@ export interface Database {
           batch_id: string;
           chunk_index: number;
           created_at: string;
+          error_message: string | null;
           id: string;
           page_end: number | null;
           page_start: number | null;
@@ -286,6 +295,7 @@ export interface Database {
           batch_id: string;
           chunk_index: number;
           created_at?: string;
+          error_message?: string | null;
           id?: string;
           page_end?: number | null;
           page_start?: number | null;
@@ -307,6 +317,7 @@ export interface Database {
           status: string;
           suggested_destination: string | null;
           title: string | null;
+          updated_at: string;
         };
         Insert: {
           batch_id: string;
@@ -319,6 +330,7 @@ export interface Database {
           status?: string;
           suggested_destination?: string | null;
           title?: string | null;
+          updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["pdf_import_items"]["Insert"]>;
         Relationships: [];
@@ -333,7 +345,7 @@ export interface Database {
           input_json: Json;
           job_type: string;
           progress: number;
-          result_json: Json | null;
+          result_json: Json;
           started_at: string | null;
           status: string;
           total_steps: number | null;
@@ -349,7 +361,7 @@ export interface Database {
           input_json?: Json;
           job_type: string;
           progress?: number;
-          result_json?: Json | null;
+          result_json?: Json;
           started_at?: string | null;
           status?: string;
           total_steps?: number | null;

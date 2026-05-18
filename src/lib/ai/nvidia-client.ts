@@ -244,7 +244,8 @@ async function nvidiaFetch(path: string, init: RequestInit, purpose: NvidiaModel
   const timeout = setTimeout(() => controller.abort(), env.NVIDIA_AI_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${env.NVIDIA_API_BASE_URL}${path}`, {
+    const baseUrl = env.NVIDIA_API_BASE_URL.replace(/\/+$/, "").replace(/\/v1$/, "");
+    const response = await fetch(`${baseUrl}${path}`, {
       ...init,
       headers: {
         Authorization: `Bearer ${apiKey}`,

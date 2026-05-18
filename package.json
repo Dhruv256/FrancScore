@@ -21,6 +21,7 @@
     "generate:book-audio": "tsx scripts/generate-book-audio.ts",
     "generate:audio": "tsx scripts/generate-listening-audio.ts",
     "make-admin": "tsx scripts/make-admin.ts",
+    "cleanup:pdf-import": "tsx scripts/cleanup-broken-pdf-import.ts",
     "report:learning": "tsx scripts/report-learning-counts.ts"
   },
   "dependencies": {

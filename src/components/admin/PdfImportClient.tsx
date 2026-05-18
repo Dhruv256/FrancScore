@@ -19,9 +19,11 @@ type PdfBatch = {
 export function PdfImportClient({
   batches,
   enabled,
+  setupWarnings,
 }: {
   batches: PdfBatch[];
   enabled: boolean;
+  setupWarnings: string[];
 }) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -29,14 +31,14 @@ export function PdfImportClient({
   const [error, setError] = useState<string | null>(null);
 
   const upload = async () => {
-    if (!file || isUploading) return;
+    if (!file || isUploading || !enabled) return;
     setIsUploading(true);
     setError(null);
 
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch("/api/admin/pdf-import", {
+      const response = await fetch("/api/admin/pdf-import/upload", {
         method: "POST",
         body: formData,
       });
@@ -78,9 +80,14 @@ export function PdfImportClient({
         </div>
       </div>
 
-      {!enabled ? (
+      {setupWarnings.length ? (
         <div className="rounded-[1.5rem] border border-accent-amber/30 bg-accent-amber/10 p-4 text-sm text-accent-amber">
-          PDF processing is disabled. Set <code>PDF_PROCESSING_ENABLED=true</code> and configure NVIDIA PDF model env vars.
+          <p className="font-black text-text-primary">System setup warnings</p>
+          <ul className="mt-2 space-y-1">
+            {setupWarnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
         </div>
       ) : null}
 
@@ -102,7 +109,7 @@ export function PdfImportClient({
           <button
             type="button"
             onClick={() => void upload()}
-            disabled={!file || isUploading}
+            disabled={!file || isUploading || !enabled}
             className="btn btn-primary"
           >
             {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}

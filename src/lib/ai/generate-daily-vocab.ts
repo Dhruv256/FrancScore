@@ -49,17 +49,29 @@ const BAD_TERM_PATTERNS = [
 
 export type DailyVocabGenerationSummary = {
   generationId: string;
+  batchId: string | null;
   generationDate: string;
   modelUsed: string | null;
   requestedCount: number;
+  generatedCount: number;
   insertedCount: number;
   skippedDuplicateCount: number;
   failedCount: number;
   status: "completed" | "failed" | "already_completed";
   message: string;
+  insertedPreview: Array<{
+    id: string;
+    french_word: string;
+    english_meaning: string;
+    topic: string | null;
+    cefr_level: string;
+    tags: string[];
+  }>;
 };
 
 export async function generateDailyVocabularyBatch(input?: {
+  jobId?: string;
+  userId?: string | null;
   onProgress?: (progress: number, currentStep: string) => Promise<void>;
 }): Promise<DailyVocabGenerationSummary> {
   const env = getServerEnv();
@@ -68,6 +80,10 @@ export async function generateDailyVocabularyBatch(input?: {
     throw new Error(
       "Daily AI vocabulary generation is disabled. Set AI_VOCAB_GENERATION_ENABLED=true on the server.",
     );
+  }
+
+  if (!env.NVIDIA_MAIN_API_KEY) {
+    throw new Error("NVIDIA_MAIN_API_KEY is missing on the server.");
   }
 
   const supabase = createAdminClient();
@@ -88,18 +104,26 @@ export async function generateDailyVocabularyBatch(input?: {
     await input?.onProgress?.(100, "Already generated today");
     return {
       generationId: existingGeneration.id,
+      batchId: null,
       generationDate,
       modelUsed: existingGeneration.model_used,
       requestedCount: existingGeneration.requested_count,
+      generatedCount: existingGeneration.inserted_count + existingGeneration.skipped_duplicate_count + existingGeneration.failed_count,
       insertedCount: existingGeneration.inserted_count,
       skippedDuplicateCount: existingGeneration.skipped_duplicate_count,
       failedCount: existingGeneration.failed_count,
       status: "already_completed",
       message: "Today's 50 AI vocabulary words have already been generated.",
+      insertedPreview: [],
     };
   }
 
   const generationId = existingGeneration?.id ?? crypto.randomUUID();
+  const batchId = await createGenerationBatch({
+    generatedBy: input?.userId ?? null,
+    requestedCount,
+    status: "pending",
+  });
   const { error: upsertError } = await supabase.from("daily_vocab_generations").upsert(
     {
       id: generationId,
@@ -109,6 +133,7 @@ export async function generateDailyVocabularyBatch(input?: {
       inserted_count: 0,
       skipped_duplicate_count: 0,
       failed_count: 0,
+      job_id: input?.jobId ?? null,
       error_message: null,
       completed_at: null,
     },
@@ -126,6 +151,7 @@ export async function generateDailyVocabularyBatch(input?: {
     const fallbackModel = env.NVIDIA_VOCAB_FALLBACK_MODEL ?? env.NVIDIA_MAIN_MODEL;
     let modelUsed = primaryModel;
     let generatedItems: AiVocabItem[] = [];
+    let totalGeneratedCount = 0;
 
     try {
       await input?.onProgress?.(30, `Calling vocabulary model for ${requestedCount} items`);
@@ -134,6 +160,7 @@ export async function generateDailyVocabularyBatch(input?: {
         model: primaryModel,
         excludedTerms: existingTermsForPrompt,
       });
+      totalGeneratedCount += generatedItems.length;
     } catch (error) {
       if (!(error instanceof NvidiaAIError)) {
         throw error;
@@ -145,6 +172,7 @@ export async function generateDailyVocabularyBatch(input?: {
         model: fallbackModel,
         excludedTerms: existingTermsForPrompt,
       });
+      totalGeneratedCount += generatedItems.length;
     }
 
     await input?.onProgress?.(70, "Validating and deduplicating vocabulary");
@@ -163,6 +191,7 @@ export async function generateDailyVocabularyBatch(input?: {
         retryInstructions:
           "The first response contained duplicates or invalid rows. Return only fresh, flashcard-worthy rows for the missing count.",
       });
+      totalGeneratedCount += retryItems.length;
       cleaned = mergeCleanedResults(cleaned, cleanGeneratedItems(retryItems, existingKeys));
     }
 
@@ -171,9 +200,12 @@ export async function generateDailyVocabularyBatch(input?: {
     );
 
     await input?.onProgress?.(88, `Inserting ${rows.length} vocabulary rows`);
-    const { error: insertError } = rows.length
-      ? await supabase.from("vocabulary").insert(rows)
-      : { error: null };
+    const { data: insertedRows, error: insertError } = rows.length
+      ? await supabase
+          .from("vocabulary")
+          .insert(rows)
+          .select("id,french_word,english_meaning,topic,cefr_level,tags")
+      : { data: [], error: null };
 
     if (insertError) {
       throw new Error(insertError.message);
@@ -181,6 +213,7 @@ export async function generateDailyVocabularyBatch(input?: {
 
     const insertedCount = rows.length;
     const failedCount = Math.max(0, requestedCount - insertedCount - cleaned.duplicates);
+    const generatedCount = totalGeneratedCount;
     await input?.onProgress?.(95, "Saving generation summary");
     await supabase
       .from("daily_vocab_generations")
@@ -190,23 +223,46 @@ export async function generateDailyVocabularyBatch(input?: {
         inserted_count: insertedCount,
         skipped_duplicate_count: cleaned.duplicates,
         failed_count: failedCount,
+        job_id: input?.jobId ?? null,
         completed_at: new Date().toISOString(),
       })
       .eq("id", generationId);
+    await completeGenerationBatch({
+      batchId,
+      status: "completed",
+      requestedCount,
+      generatedCount,
+      insertedCount,
+      duplicateCount: cleaned.duplicates,
+      failedCount,
+      model: modelUsed,
+      insertedRows: insertedRows ?? [],
+    });
 
     return {
       generationId,
+      batchId,
       generationDate,
       modelUsed,
       requestedCount,
+      generatedCount,
       insertedCount,
       skippedDuplicateCount: cleaned.duplicates,
       failedCount,
       status: "completed",
       message: `Generated ${insertedCount} published AI vocabulary words for today.`,
+      insertedPreview: (insertedRows ?? []).slice(0, 12).map((row) => ({
+        id: row.id,
+        french_word: row.french_word,
+        english_meaning: row.english_meaning,
+        topic: row.topic,
+        cefr_level: row.cefr_level,
+        tags: row.tags ?? [],
+      })),
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Daily vocabulary generation failed.";
+    await failGenerationBatch(batchId, errorMessage);
     await supabase
       .from("daily_vocab_generations")
       .update({
@@ -217,6 +273,84 @@ export async function generateDailyVocabularyBatch(input?: {
       .eq("id", generationId);
     throw error;
   }
+}
+
+async function createGenerationBatch(input: {
+  generatedBy: string | null;
+  requestedCount: number;
+  status: string;
+}) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any;
+  const { data, error } = await supabase
+    .from("vocabulary_generation_batches")
+    .insert({
+      generated_by: input.generatedBy,
+      source: "ai_daily",
+      requested_count: input.requestedCount,
+      status: input.status,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data.id as string;
+}
+
+async function completeGenerationBatch(input: {
+  batchId: string | null;
+  requestedCount: number;
+  generatedCount: number;
+  insertedCount: number;
+  duplicateCount: number;
+  failedCount: number;
+  model: string | null;
+  status: string;
+  insertedRows: Array<{ id: string; french_word: string }>;
+}) {
+  if (!input.batchId) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any;
+  await supabase
+    .from("vocabulary_generation_batches")
+    .update({
+      requested_count: input.requestedCount,
+      generated_count: input.generatedCount,
+      inserted_count: input.insertedCount,
+      duplicate_count: input.duplicateCount,
+      failed_count: input.failedCount,
+      model: input.model,
+      status: input.status,
+      error_message: null,
+    })
+    .eq("id", input.batchId);
+
+  if (input.insertedRows.length) {
+    await supabase.from("vocabulary_generation_items").insert(
+      input.insertedRows.map((row) => ({
+        batch_id: input.batchId,
+        vocabulary_id: row.id,
+        french_word: row.french_word,
+        status: "inserted",
+      })),
+    );
+  }
+}
+
+async function failGenerationBatch(batchId: string | null, errorMessage: string) {
+  if (!batchId) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any;
+  await supabase
+    .from("vocabulary_generation_batches")
+    .update({
+      status: "failed",
+      error_message: errorMessage.slice(0, 1000),
+    })
+    .eq("id", batchId);
 }
 
 async function requestVocabularyItems(input: {

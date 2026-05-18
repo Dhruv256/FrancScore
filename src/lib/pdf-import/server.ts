@@ -5,11 +5,13 @@ import { processPdfChunkWithAi, type PdfChunkAiItem } from "@/lib/ai/process-pdf
 import { getServerEnv } from "@/lib/env/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database, Json } from "@/lib/supabase/database.types";
+import {
+  MissingDatabaseMigrationError,
+  toMissingMigrationError,
+} from "@/lib/supabase/schema-errors";
 
 type SupabaseAdmin = ReturnType<typeof createAdminClient>;
 type PdfItemRow = Database["public"]["Tables"]["pdf_import_items"]["Row"];
-
-const PDF_BUCKET = "pdf-imports";
 
 export async function listPdfImportBatches() {
   const supabase = createAdminClient();
@@ -19,8 +21,29 @@ export async function listPdfImportBatches() {
     .order("created_at", { ascending: false })
     .limit(25);
 
-  if (error) throw new Error(error.message);
+  if (error) throwPdfImportError(error, "pdf_import_batches", "Unable to load PDF import batches.");
   return data ?? [];
+}
+
+export async function safeListPdfImportBatches() {
+  try {
+    return {
+      batches: await listPdfImportBatches(),
+      error: null as string | null,
+    };
+  } catch (error) {
+    if (error instanceof MissingDatabaseMigrationError) {
+      return {
+        batches: [],
+        error: error.message,
+      };
+    }
+
+    return {
+      batches: [],
+      error: error instanceof Error ? error.message : "Unable to load PDF import batches.",
+    };
+  }
 }
 
 export async function getPdfImportBatchDetail(batchId: string) {
@@ -31,9 +54,15 @@ export async function getPdfImportBatchDetail(batchId: string) {
     supabase.from("pdf_import_items").select("*").eq("batch_id", batchId).order("created_at"),
   ]);
 
-  if (batchResult.error) throw new Error(batchResult.error.message);
-  if (chunksResult.error) throw new Error(chunksResult.error.message);
-  if (itemsResult.error) throw new Error(itemsResult.error.message);
+  if (batchResult.error) {
+    throwPdfImportError(batchResult.error, "pdf_import_batches", "PDF import batch not found.");
+  }
+  if (chunksResult.error) {
+    throwPdfImportError(chunksResult.error, "pdf_import_chunks", "Unable to load PDF import chunks.");
+  }
+  if (itemsResult.error) {
+    throwPdfImportError(itemsResult.error, "pdf_import_items", "Unable to load PDF import items.");
+  }
 
   return {
     batch: batchResult.data,
@@ -69,7 +98,7 @@ export async function createPdfImportBatch(input: {
     await updateBatch(supabase, batchId, { status: "extracting" });
     const buffer = Buffer.from(await input.file.arrayBuffer());
     const { error: uploadError } = await supabase.storage
-      .from(PDF_BUCKET)
+      .from(env.SUPABASE_PDF_IMPORTS_BUCKET)
       .upload(storagePath, buffer, {
         contentType: "application/pdf",
         upsert: false,
@@ -132,10 +161,10 @@ export async function processNextPdfImportChunk(batchId: string, chunkId?: strin
     .single();
 
   if (batchError || !batch) {
-    throw new Error(batchError?.message ?? "PDF import batch not found.");
+    throwPdfImportError(batchError, "pdf_import_batches", "PDF import batch not found.");
   }
 
-  await updateBatch(supabase, batchId, { status: "processing_with_ai", error_message: null });
+  await updateBatch(supabase, batchId, { status: "processing", error_message: null });
 
   const chunk = await getProcessableChunk(supabase, batchId, chunkId);
   if (!chunk) {
@@ -171,7 +200,7 @@ export async function processNextPdfImportChunk(batchId: string, chunkId?: strin
 
     const remaining = await countRemainingChunks(supabase, batchId);
     await updateBatch(supabase, batchId, {
-      status: remaining === 0 ? "ready_for_review" : "processing_with_ai",
+      status: remaining === 0 ? "ready_for_review" : "processing",
       model_used: modelUsed,
       completed_at: remaining === 0 ? new Date().toISOString() : null,
     });
@@ -208,7 +237,7 @@ export async function setPdfImportItemStatus(input: {
     .update({ status: input.status })
     .eq("id", input.itemId);
 
-  if (error) throw new Error(error.message);
+  if (error) throwPdfImportError(error, "pdf_import_items", "Unable to update PDF import item.");
 }
 
 export async function updatePdfImportItem(input: {
@@ -227,7 +256,7 @@ export async function updatePdfImportItem(input: {
     })
     .eq("id", input.itemId);
 
-  if (error) throw new Error(error.message);
+  if (error) throwPdfImportError(error, "pdf_import_items", "Unable to update PDF import item.");
 }
 
 export async function approveHighConfidencePdfImportItems(batchId: string, minimumConfidence = 0.82) {
@@ -240,7 +269,9 @@ export async function approveHighConfidencePdfImportItems(batchId: string, minim
     .gte("confidence", minimumConfidence)
     .neq("item_type", "invalid");
 
-  if (countError) throw new Error(countError.message);
+  if (countError) {
+    throwPdfImportError(countError, "pdf_import_items", "Unable to count PDF import items.");
+  }
 
   const { error } = await supabase
     .from("pdf_import_items")
@@ -250,8 +281,39 @@ export async function approveHighConfidencePdfImportItems(batchId: string, minim
     .gte("confidence", minimumConfidence)
     .neq("item_type", "invalid");
 
-  if (error) throw new Error(error.message);
+  if (error) throwPdfImportError(error, "pdf_import_items", "Unable to approve PDF import items.");
   return count ?? 0;
+}
+
+export async function retryFailedPdfImportChunks(batchId: string) {
+  const supabase = createAdminClient();
+  const { count, error: countError } = await supabase
+    .from("pdf_import_chunks")
+    .select("id", { count: "exact", head: true })
+    .eq("batch_id", batchId)
+    .eq("ai_status", "failed");
+
+  if (countError) {
+    throwPdfImportError(countError, "pdf_import_chunks", "Unable to count failed PDF chunks.");
+  }
+
+  const { error } = await supabase
+    .from("pdf_import_chunks")
+    .update({ ai_status: "pending", error_message: null })
+    .eq("batch_id", batchId)
+    .eq("ai_status", "failed");
+
+  if (error) {
+    throwPdfImportError(error, "pdf_import_chunks", "Unable to retry failed PDF chunks.");
+  }
+
+  await updateBatch(supabase, batchId, {
+    status: "processing",
+    error_message: null,
+    completed_at: null,
+  });
+
+  return { resetCount: count ?? 0 };
 }
 
 export async function importApprovedPdfItems(batchId: string) {
@@ -262,7 +324,7 @@ export async function importApprovedPdfItems(batchId: string) {
     .eq("batch_id", batchId)
     .eq("status", "approved");
 
-  if (error) throw new Error(error.message);
+  if (error) throwPdfImportError(error, "pdf_import_items", "Unable to load approved PDF import items.");
 
   const counts = {
     vocabulary: 0,
@@ -380,7 +442,7 @@ async function getProcessableChunk(
   }
 
   const { data, error } = await query.maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throwPdfImportError(error, "pdf_import_chunks", "Unable to load PDF import chunk.");
   return data;
 }
 
@@ -391,7 +453,7 @@ async function countRemainingChunks(supabase: SupabaseAdmin, batchId: string) {
     .eq("batch_id", batchId)
     .in("ai_status", ["pending", "failed"]);
 
-  if (error) throw new Error(error.message);
+  if (error) throwPdfImportError(error, "pdf_import_chunks", "Unable to count PDF import chunks.");
   return count ?? 0;
 }
 
@@ -527,7 +589,7 @@ async function createBatch(
   payload: Database["public"]["Tables"]["pdf_import_batches"]["Insert"],
 ) {
   const { error } = await supabase.from("pdf_import_batches").insert(payload);
-  if (error) throw new Error(error.message);
+  if (error) throwPdfImportError(error, "pdf_import_batches", "Unable to create PDF import batch.");
 }
 
 async function updateBatch(
@@ -536,7 +598,16 @@ async function updateBatch(
   payload: Database["public"]["Tables"]["pdf_import_batches"]["Update"],
 ) {
   const { error } = await supabase.from("pdf_import_batches").update(payload).eq("id", batchId);
-  if (error) throw new Error(error.message);
+  if (error) throwPdfImportError(error, "pdf_import_batches", "Unable to update PDF import batch.");
+}
+
+function throwPdfImportError(error: unknown, tableName: string, fallback: string): never {
+  const migrationError = toMissingMigrationError(error, tableName);
+  if (migrationError) {
+    throw migrationError;
+  }
+
+  throw new Error(error instanceof Error ? error.message : fallback);
 }
 
 function cleanPdfText(value: string) {

@@ -1,24 +1,24 @@
 import { NextResponse } from "next/server";
 import { getAdminAuthErrorResponse, requireAdmin } from "@/lib/auth/admin";
 import { isPdfBookFeatureEnabled, pdfBookFeatureDisabledJson } from "@/lib/features/feature-flags";
-import { createPdfImportBatch } from "@/lib/pdf-import/server";
+import { processNextPdfImportChunk } from "@/lib/pdf-import/server";
 import { isMissingDatabaseMigrationError } from "@/lib/supabase/schema-errors";
 
-export async function POST(request: Request) {
+type RouteContext = {
+  params: Promise<{ batchId: string }>;
+};
+
+export async function POST(request: Request, context: RouteContext) {
   if (!isPdfBookFeatureEnabled()) {
     return pdfBookFeatureDisabledJson();
   }
 
   try {
-    const { user } = await requireAdmin();
-    const formData = await request.formData();
-    const file = formData.get("file");
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "Upload a PDF file." }, { status: 400 });
-    }
-
-    const batchId = await createPdfImportBatch({ userId: user.id, file });
-    return NextResponse.json({ batchId });
+    await requireAdmin();
+    const { batchId } = await context.params;
+    const body = (await request.json().catch(() => ({}))) as { chunkId?: string };
+    const result = await processNextPdfImportChunk(batchId, body.chunkId);
+    return NextResponse.json(result);
   } catch (error) {
     const authError = getAdminAuthErrorResponse(error);
     if (authError) {
@@ -30,9 +30,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "PDF import failed.",
-      },
+      { error: error instanceof Error ? error.message : "Unable to process PDF chunk." },
       { status: 500 },
     );
   }

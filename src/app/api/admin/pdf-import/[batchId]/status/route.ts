@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
 import { getAdminAuthErrorResponse, requireAdmin } from "@/lib/auth/admin";
-import { processNextJobStep } from "@/lib/jobs/server";
-import { createRouteTimer } from "@/lib/observability/timing";
+import { isPdfBookFeatureEnabled, pdfBookFeatureDisabledJson } from "@/lib/features/feature-flags";
+import { getPdfImportBatchDetail } from "@/lib/pdf-import/server";
 import { isMissingDatabaseMigrationError } from "@/lib/supabase/schema-errors";
 
 type RouteContext = {
-  params: Promise<{ jobId: string }>;
+  params: Promise<{ batchId: string }>;
 };
 
-export async function POST(_request: Request, context: RouteContext) {
-  const timer = createRouteTimer("POST /api/jobs/[jobId]/process-next");
+export async function GET(_request: Request, context: RouteContext) {
+  if (!isPdfBookFeatureEnabled()) {
+    return pdfBookFeatureDisabledJson();
+  }
 
   try {
     await requireAdmin();
-    const { jobId } = await context.params;
-    const job = await processNextJobStep(jobId);
-    timer.step("processed_step");
-    timer.done({ job_id: job.id, status: job.status });
-    return NextResponse.json({ job });
+    const { batchId } = await context.params;
+    const detail = await getPdfImportBatchDetail(batchId);
+    return NextResponse.json(detail);
   } catch (error) {
     const authError = getAdminAuthErrorResponse(error);
     if (authError) {
@@ -28,9 +28,8 @@ export async function POST(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    timer.done({ failed: true });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to process job." },
+      { error: error instanceof Error ? error.message : "Unable to load PDF import status." },
       { status: 500 },
     );
   }

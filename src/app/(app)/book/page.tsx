@@ -64,8 +64,7 @@ export default async function BookDashboardPage() {
 
       {overview.stats.generatedItems === 0 && (
         <div className="rounded-[2rem] border border-brand-green/20 bg-brand-green/10 p-5 text-sm text-text-secondary">
-          Learning material not generated yet. Run <code>npm run generate:book-material -- --chapter 1</code>
-          {" "}or <code>npm run generate:book-material -- --all</code>.
+          Learning material has not been generated yet. This module will be rebuilt before the next book import.
         </div>
       )}
 

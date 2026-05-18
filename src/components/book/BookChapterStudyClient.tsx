@@ -141,7 +141,7 @@ function ReadPanel({
 }) {
   const page = pages[pageIndex];
   if (!page) {
-    return <EmptyPanel title="No pages imported for this chapter." action="Run npm run import:book again after checking chapter detection." />;
+    return <EmptyPanel title="No pages imported for this chapter." action="This chapter will be re-imported after the book module is rebuilt." />;
   }
 
   return (
@@ -183,7 +183,7 @@ function ReadPanel({
 
 function NotesPanel({ notes }: { notes: BookNote[] }) {
   if (!notes.length) {
-    return <EmptyPanel title="Learning material not generated yet." action="Run npm run generate:book-material -- --chapter 1 or -- --all." />;
+    return <EmptyPanel title="Learning material not generated yet." action="Notes will return after the book module is rebuilt." />;
   }
 
   return (
@@ -212,7 +212,7 @@ function PracticePanel({
 }) {
   const item = items[index];
   if (!item) {
-    return <EmptyPanel title="No practice generated for this chapter yet." action="Run npm run generate:book-material." />;
+    return <EmptyPanel title="No practice generated for this chapter yet." action="Practice will return after the book module is rebuilt." />;
   }
   const json = getJsonObject(item.item_json);
 
@@ -260,7 +260,7 @@ function FlashcardPanel({
 }) {
   const card = flashcards[cardIndex];
   if (!card) {
-    return <EmptyPanel title="No chapter flashcards generated yet." action="Run npm run generate:book-material." />;
+    return <EmptyPanel title="No chapter flashcards generated yet." action="Flashcards will return after the book module is rebuilt." />;
   }
   const json = getJsonObject(card.item_json);
   const back = getJsonObject(json.back);
@@ -302,7 +302,7 @@ function FlashcardPanel({
 
 function QuizPanel({ items }: { items: BookGeneratedItem[] }) {
   if (!items.length) {
-    return <EmptyPanel title="No quiz generated yet." action="Run npm run generate:book-material." />;
+    return <EmptyPanel title="No quiz generated yet." action="Quizzes will return after the book module is rebuilt." />;
   }
 
   return (
