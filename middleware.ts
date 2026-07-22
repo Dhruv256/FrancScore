@@ -3,6 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  if (
+    process.env.FLASHCARDS_ONLY_MODE !== "false" &&
+    ["/dashboard", "/practice", "/book", "/mocks", "/progress", "/badges", "/onboarding"].some((route) => pathname === route || pathname.startsWith(`${route}/`))
+  ) {
+    return NextResponse.redirect(new URL("/flashcards", request.url));
+  }
+
   // Allow Next internals and static files
   if (
     pathname.startsWith("/_next") ||

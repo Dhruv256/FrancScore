@@ -4,6 +4,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        background: "var(--background)",
+        surface: {
+          primary: "var(--surface-primary)",
+          secondary: "var(--surface-secondary)",
+          elevated: "var(--surface-elevated)",
+          muted: "var(--surface-muted)",
+        },
+        foreground: {
+          DEFAULT: "var(--foreground)",
+          muted: "var(--foreground-muted)",
+          soft: "var(--foreground-soft)",
+        },
+        accent: {
+          DEFAULT: "var(--accent-primary)",
+          secondary: "var(--accent-secondary)",
+          soft: "var(--accent-soft)",
+        },
+        success: "var(--success)",
+        warning: "var(--warning)",
+        danger: "var(--danger)",
         editorial: {
           offWhite: "#F4F0E8",
           beige: "#ECE7DD",

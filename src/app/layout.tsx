@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://francscore.app";
 
@@ -68,6 +69,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: `(() => { try { const v = localStorage.getItem('francscore_theme_v1'); const d = v === 'dark' || v === 'light' ? v : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = d; } catch (_) {} })()` }} />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5"
@@ -80,8 +82,8 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className="min-h-screen bg-bg-primary text-text-primary antialiased">
-        {children}
+      <body className="min-h-screen antialiased">
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

@@ -1,0 +1,800 @@
+{
+  "detectedFilePath": "C:\\Users\\dhruv\\Documents\\Codex\\2026-07-22\\https-french-kwiziq-com-learn-theme\\outputs\\kwiziq_french_vocabulary_word_level.docx",
+  "file": "kwiziq_french_vocabulary_word_level.docx",
+  "totalTablesFound": 8,
+  "totalRowsScanned": 4348,
+  "validRows": 4301,
+  "insertedRows": 0,
+  "updatedRows": 0,
+  "duplicateRows": 0,
+  "skippedRows": 47,
+  "rowsByLevel": {
+    "A0": 117,
+    "A1": 936,
+    "A2": 1367,
+    "B1": 1351,
+    "B2": 477,
+    "C1": 53
+  },
+  "themesFound": 224,
+  "skippedReasons": [
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "CEFR level",
+        "Theme pages",
+        "Word entries"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "A0 — Entry Level",
+        "8",
+        "117"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "A1 — Beginner",
+        "53",
+        "936"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "A2 — Lower Intermediate",
+        "72",
+        "1367"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "B1 — Intermediate",
+        "65",
+        "1351"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "B2 — Upper Intermediate",
+        "22",
+        "477"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "C1 — Advanced",
+        "4",
+        "53"
+      ]
+    },
+    {
+      "reason": "repeated table heading",
+      "row": [
+        "Theme",
+        "French",
+        "English",
+        "Audio",
+        "Page"
+      ]
+    },
+    {
+      "reason": "repeated table heading",
+      "row": [
+        "Theme",
+        "French",
+        "English",
+        "Audio",
+        "Page"
+      ]
+    },
+    {
+      "reason": "repeated table heading",
+      "row": [
+        "Theme",
+        "French",
+        "English",
+        "Audio",
+        "Page"
+      ]
+    },
+    {
+      "reason": "repeated table heading",
+      "row": [
+        "Theme",
+        "French",
+        "English",
+        "Audio",
+        "Page"
+      ]
+    },
+    {
+      "reason": "repeated table heading",
+      "row": [
+        "Theme",
+        "French",
+        "English",
+        "Audio",
+        "Page"
+      ]
+    },
+    {
+      "reason": "repeated table heading",
+      "row": [
+        "Theme",
+        "French",
+        "English",
+        "Audio",
+        "Page"
+      ]
+    },
+    {
+      "reason": "repeated table heading",
+      "row": [
+        "Theme",
+        "French",
+        "English",
+        "Audio",
+        "Page"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "List of French \"state verbs\" - \"verbes d'état\"",
+        "être",
+        "to be",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "List of French \"state verbs\" - \"verbes d'état\"",
+        "devenir",
+        "to become",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "List of French \"state verbs\" - \"verbes d'état\"",
+        "paraître",
+        "to appear",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "List of French \"state verbs\" - \"verbes d'état\"",
+        "sembler",
+        "to seem",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "List of French \"state verbs\" - \"verbes d'état\"",
+        "avoir l'air",
+        "to look like (to seem)",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "List of French \"state verbs\" - \"verbes d'état\"",
+        "rester",
+        "to stay",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "List of French \"state verbs\" - \"verbes d'état\"",
+        "demeurer",
+        "to remain",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "la Saint-Patrick",
+        "Saint Patrick's Day",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "Joyeuse Saint-Patrick !",
+        "Happy Saint Patrick's Day!",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "l'Irlande",
+        "Ireland",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "le drapeau",
+        "flag",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "irlandais",
+        "Irish (m)",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "irlandaise",
+        "Irish (f)",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "un trèfle irlandais",
+        "a shamrock",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "la harpe",
+        "harp",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "la chance",
+        "luck",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "un trèfle à quatre feuilles",
+        "a four-leaf clover",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "un fer à cheval",
+        "a horseshoe",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "vert",
+        "green (m)",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "orange",
+        "orange",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "la tournée des bars / la tournée des pubs",
+        "pub crawl [US: bar hopping]",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "une bière",
+        "a beer",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "verte",
+        "green (f)",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "une bière pression",
+        "a draught beer",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "le ragoût",
+        "stew",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "une gigue",
+        "a jig",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "un violon",
+        "a fiddle",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "une barbe",
+        "a beard",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "un chapeau haut-de-forme",
+        "a top hat",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "un farfadet",
+        "a leprechaun",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "une marmite d'or",
+        "a pot of gold",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "une pièce d'or",
+        "a gold coin",
+        "audio",
+        "open"
+      ]
+    },
+    {
+      "reason": "no valid CEFR level from nearest heading",
+      "row": [
+        "Saint Patrick's Day vocabulary in French",
+        "un arc-en-ciel",
+        "a rainbow",
+        "audio",
+        "open"
+      ]
+    }
+  ],
+  "sampleRows": [
+    {
+      "french_word": "vert",
+      "english_meaning": "green (m)",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "26220d01263cc90d2465f9fd911ad2b3c97de14c2ecbc8cdb8c32df4e22a5278",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "bleu",
+      "english_meaning": "blue (m)",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "6b034d4de2c49c6dd1577b7487027212d64e33dc33dfb5f4a4dbb5ceedd560cd",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "blanc",
+      "english_meaning": "white (m)",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "45969373655f88e74afbff6fa0744cd3fd422203920cca4bd37ae2c5e98eda97",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "rouge",
+      "english_meaning": "red",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "877153b7778d49a9724b9b14a1624217041cee6adb750748beee29f4f27175cf",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "noir",
+      "english_meaning": "black (m)",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "b7439a8a13f8d9b07293378dc0745e2d18d43a9403a6d14a992e42b4d713b1d6",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "orange",
+      "english_meaning": "orange",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "c7c070610b51c3685f707b83b91bc967809db24fbb7474aedd9746cc3f227e71",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "rose",
+      "english_meaning": "pink",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "16688ccd23eb3d256eb991e2134d8bbba2c73efd6ba41384f8a38778d58046fc",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "gris",
+      "english_meaning": "grey (m)",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "c6ff512de33c50c6340499f47bcc77feec4844cd2039881851f7a515e7793294",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "violet",
+      "english_meaning": "purple (m)",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "6c9bd05c631952caabff8c5c0a9761d78e38f37add4ac0189bdc8438ec926b62",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "jaune",
+      "english_meaning": "yellow",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "9a307e408e2d4c876140fa6eee94ccb70f9e220f8161cdde3f281a0ddef99e28",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "marron",
+      "english_meaning": "brown",
+      "cefr_level": "A0",
+      "topic": "Colours in French",
+      "category_slug": "colours",
+      "broad_category": "Other",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "e5b703ff8e9414647485569f20098525ca75b3092f63b20b9fac24c8dbb8bff7",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "lundi",
+      "english_meaning": "Monday",
+      "cefr_level": "A0",
+      "topic": "Days of the week in French",
+      "category_slug": "days-of-the-week",
+      "broad_category": "Numbers and Time",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "cbffbd33d8117e53df6585634dac9d111253cc5649fe449e5df7d1159a3f8281",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "mardi",
+      "english_meaning": "Tuesday",
+      "cefr_level": "A0",
+      "topic": "Days of the week in French",
+      "category_slug": "days-of-the-week",
+      "broad_category": "Numbers and Time",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "b1f2ac8130532343873b004d6265fc4edfa4bb8a540464d940f18126187b9703",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "mercredi",
+      "english_meaning": "Wednesday",
+      "cefr_level": "A0",
+      "topic": "Days of the week in French",
+      "category_slug": "days-of-the-week",
+      "broad_category": "Numbers and Time",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "d47bd9cf7e320833ac9f4e388771c0c760c9ce61b768ee813fffa8d7c1137a37",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "jeudi",
+      "english_meaning": "Thursday",
+      "cefr_level": "A0",
+      "topic": "Days of the week in French",
+      "category_slug": "days-of-the-week",
+      "broad_category": "Numbers and Time",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "43088b485c36098dab1897b2bd8e584ba203de8be6b3d81b9290092770b3e03d",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "vendredi",
+      "english_meaning": "Friday",
+      "cefr_level": "A0",
+      "topic": "Days of the week in French",
+      "category_slug": "days-of-the-week",
+      "broad_category": "Numbers and Time",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "4305c9361a031e7f2dc8b3c97971d3e9fd22666579bea0d5d07f841dd01a5215",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "samedi",
+      "english_meaning": "Saturday",
+      "cefr_level": "A0",
+      "topic": "Days of the week in French",
+      "category_slug": "days-of-the-week",
+      "broad_category": "Numbers and Time",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "9d1a3ee9781b71b1d221215841b7e8b365ed422bef2a296999de592d2b39046d",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "dimanche",
+      "english_meaning": "Sunday",
+      "cefr_level": "A0",
+      "topic": "Days of the week in French",
+      "category_slug": "days-of-the-week",
+      "broad_category": "Numbers and Time",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "a0c8ba2c43514eb62f19354c2ab37df2523f1f6a1f25758daa11c06b0d7d9957",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "janvier",
+      "english_meaning": "January",
+      "cefr_level": "A0",
+      "topic": "List of months in French",
+      "category_slug": "list-of-months",
+      "broad_category": "Numbers and Time",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "5db914405c0d53c6ee78878b35d2fc616d6028067bead7f9a5c7f0421840b58e",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    },
+    {
+      "french_word": "février",
+      "english_meaning": "February",
+      "cefr_level": "A0",
+      "topic": "List of months in French",
+      "category_slug": "list-of-months",
+      "broad_category": "Numbers and Time",
+      "source": "kwiziq_docx",
+      "source_document": "kwiziq_french_vocabulary_word_level.docx",
+      "source_row_key": "ec6df0e70a271e417265438e7144b8b57052dfada3d0ca075dad385fe5e84881",
+      "is_published": true,
+      "exam_type": "BOTH",
+      "frequency_score": 50,
+      "french_example": null,
+      "english_example_translation": null
+    }
+  ]
+}

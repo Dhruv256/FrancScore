@@ -1,8 +1,5 @@
-import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { getProfileDisplayName } from "@/lib/auth";
-import { resolveAuthState } from "@/lib/auth/resolve-auth-state";
-import { isPdfBookFeatureEnabled } from "@/lib/features";
+import { PageTransition } from "@/components/motion/PageTransition";
 
 export const dynamic = "force-dynamic";
 
@@ -11,31 +8,13 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const authState = await resolveAuthState();
-
-  if (authState.status === "anonymous") {
-    redirect("/auth/login");
-  }
-
-  if (authState.status !== "ready") {
-    redirect("/onboarding");
-  }
-
   return (
     <div className="app-shell min-h-screen">
-      <Sidebar
-        userSummary={{
-          fullName: getProfileDisplayName(authState.profile, authState.user),
-          totalXp: authState.profile.total_xp,
-          currentStreak: authState.profile.current_streak,
-          isAdmin: authState.profile.role === "ADMIN",
-          pdfBookFeatureEnabled: isPdfBookFeatureEnabled(),
-        }}
-      />
-      <main className="lg:ml-64 min-h-screen">
+      <Sidebar />
+      <main className="min-h-screen lg:ml-64">
         <div className="h-14 lg:hidden" aria-hidden="true" />
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:p-8">
-          {children}
+        <div className="mx-auto max-w-6xl px-4 pb-28 pt-4 sm:px-6 lg:p-10">
+          <PageTransition>{children}</PageTransition>
         </div>
       </main>
     </div>
