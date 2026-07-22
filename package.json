@@ -23,6 +23,8 @@
     "make-admin": "tsx scripts/make-admin.ts",
     "cleanup:pdf-import": "tsx scripts/cleanup-broken-pdf-import.ts",
     "report:learning": "tsx scripts/report-learning-counts.ts"
+    ,"import:kwiziq-vocab:dry": "tsx scripts/import-kwiziq-docx-vocabulary.ts --dry-run"
+    ,"import:kwiziq-vocab": "tsx scripts/import-kwiziq-docx-vocabulary.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
