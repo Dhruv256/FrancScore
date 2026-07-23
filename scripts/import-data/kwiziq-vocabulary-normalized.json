@@ -25360,22 +25360,6 @@
     "english_example_translation": null
   },
   {
-    "french_word": "@",
-    "english_meaning": "@",
-    "cefr_level": "A2",
-    "topic": "General internet vocabulary in French",
-    "category_slug": "general-internet-vocabulary",
-    "broad_category": "Technology",
-    "source": "kwiziq_docx",
-    "source_document": "kwiziq_french_vocabulary_word_level.docx",
-    "source_row_key": "fb1e474f55bebba8e0227839545b1ba51a57b56701e7aa762b25aa11d597a211",
-    "is_published": true,
-    "exam_type": "BOTH",
-    "frequency_score": 50,
-    "french_example": null,
-    "english_example_translation": null
-  },
-  {
     "french_word": "la bouilloire",
     "english_meaning": "the kettle",
     "cefr_level": "A2",

@@ -10,6 +10,7 @@ const run = async () => {
   const [totals] = await sql.unsafe("select count(*)::int as total, count(distinct topic)::int as themes from public.vocabulary where is_published=true and source='kwiziq_docx'");
   const levels = await sql.unsafe("select cefr_level,count(*)::int as count from public.vocabulary where is_published=true and source='kwiziq_docx' group by cefr_level order by cefr_level");
   const sample = await sql.unsafe("select french_word,english_meaning,cefr_level,topic from public.vocabulary where is_published=true and source='kwiziq_docx' order by created_at limit 3");
-  console.log(JSON.stringify({ totals, levels, sample }, null, 2)); await sql.end();
+  const invalid = await sql.unsafe("select french_word,english_meaning from public.vocabulary where is_published=true and source='kwiziq_docx' and (french_word !~ '[[:alpha:]]' or english_meaning !~ '[[:alpha:]]') order by french_word limit 50");
+  console.log(JSON.stringify({ totals, levels, sample, invalid }, null, 2)); await sql.end();
 };
 run().catch((error) => { console.error(error); process.exitCode = 1; });

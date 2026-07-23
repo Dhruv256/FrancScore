@@ -860,3 +860,7 @@ body { background: radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--ac
 .level-b2 { background: #e4def8; color: #55418a; }
 .level-c1 { background: #d9def5; color: #263a83; }
 [data-theme="dark"] .level-a0, [data-theme="dark"] .level-a1, [data-theme="dark"] .level-a2, [data-theme="dark"] .level-b1, [data-theme="dark"] .level-b2, [data-theme="dark"] .level-c1 { background: color-mix(in srgb, var(--accent-primary) 15%, var(--surface-primary)); color: var(--foreground-muted); }
+[data-theme] .font-black, [data-theme] .font-extrabold { font-weight: 700; }
+[data-theme] .page-title { font-weight: 760; }
+[data-theme] .flashcard-word { font-weight: 720; letter-spacing: -.055em; }
+[data-theme] .editorial-title { font-weight: 650; }

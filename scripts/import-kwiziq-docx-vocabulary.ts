@@ -27,6 +27,7 @@ function clean(value: string) {
   return value.normalize("NFKC").replace(/[\u00ad\u200b\ufeff]/g, "").replace(/[\r\n]+/g, " ")
     .replace(/\s+/g, " ").trim();
 }
+function containsLetter(value: string) { return /\p{L}/u.test(value); }
 function keyPart(value: string) { return clean(value).toLocaleLowerCase("fr-FR").replace(/[’‘`]/g, "'"); }
 function slug(value: string) {
   return keyPart(value).replace(/\b(in|en) french\b/g, "").replace(/\bfrench\b/g, "")
@@ -95,6 +96,7 @@ function parseDocument(filePath: string) {
       if (!clean(french)) { skippedReasons.push({ reason: "French is empty", row: cells }); continue; }
       if (!clean(english)) { skippedReasons.push({ reason: "English is empty", row: cells }); continue; }
       const topic = clean(theme); const frenchWord = clean(french); const englishMeaning = clean(english);
+      if (!containsLetter(frenchWord) || !containsLetter(englishMeaning)) { skippedReasons.push({ reason: "symbol-only vocabulary row", row: cells }); continue; }
       const source_row_key = createHash("sha256").update([level, keyPart(topic), keyPart(frenchWord), keyPart(englishMeaning)].join("|")).digest("hex");
       if (seen.has(source_row_key)) { skippedReasons.push({ reason: "duplicate composite key", row: cells }); continue; }
       seen.add(source_row_key); themes.add(topic); counts[level]++;

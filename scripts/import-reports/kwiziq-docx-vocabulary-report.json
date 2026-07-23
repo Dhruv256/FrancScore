@@ -3,15 +3,15 @@
   "file": "kwiziq_french_vocabulary_word_level.docx",
   "totalTablesFound": 8,
   "totalRowsScanned": 4348,
-  "validRows": 4301,
-  "insertedRows": 4301,
+  "validRows": 4300,
+  "insertedRows": 4300,
   "updatedRows": 0,
   "duplicateRows": 0,
-  "skippedRows": 47,
+  "skippedRows": 48,
   "rowsByLevel": {
     "A0": 117,
     "A1": 936,
-    "A2": 1367,
+    "A2": 1366,
     "B1": 1351,
     "B2": 477,
     "C1": 53
@@ -102,6 +102,16 @@
         "English",
         "Audio",
         "Page"
+      ]
+    },
+    {
+      "reason": "symbol-only vocabulary row",
+      "row": [
+        "General internet vocabulary in French",
+        "@",
+        "@",
+        "audio",
+        "open"
       ]
     },
     {

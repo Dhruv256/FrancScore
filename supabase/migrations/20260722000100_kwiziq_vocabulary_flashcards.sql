@@ -5,6 +5,9 @@ alter table public.vocabulary add column if not exists source_document text;
 alter table public.vocabulary add column if not exists source_row_key text;
 drop index if exists public.vocabulary_source_row_key_uidx;
 create unique index if not exists vocabulary_source_row_key_uidx on public.vocabulary(source_row_key);
+delete from public.vocabulary
+where source = 'kwiziq_docx'
+  and (french_word !~ '[[:alpha:]]' or english_meaning !~ '[[:alpha:]]');
 alter table public.vocabulary enable row level security;
 drop policy if exists "Public can read published vocabulary" on public.vocabulary;
 create policy "Public can read published vocabulary" on public.vocabulary for select to anon, authenticated using (is_published = true);
