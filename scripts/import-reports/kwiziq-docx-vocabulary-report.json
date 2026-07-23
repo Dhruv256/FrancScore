@@ -4,7 +4,7 @@
   "totalTablesFound": 8,
   "totalRowsScanned": 4348,
   "validRows": 4301,
-  "insertedRows": 0,
+  "insertedRows": 4301,
   "updatedRows": 0,
   "duplicateRows": 0,
   "skippedRows": 47,
